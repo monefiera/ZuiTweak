@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">ZuiTweak</string>
+    <string name="xposeddescription">An Xposed module that applies various tweaks to Lenovo Zui-based ROMs.</string>
+    <string name="xposedminversion">82</string>
+</resources>
