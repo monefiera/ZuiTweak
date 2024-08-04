@@ -32,6 +32,7 @@ class HookDisableLauncherOnlineSearch : HookBaseHandleLoadPackage() {
                     ::hookSearchDownloadHelperGetGameAppList,
                     ::hookInternetGlobalSearchIsInternetSearchEnabled,
                     ::hookGlobalSearchUtilsGetDatabaseType,
+                    ::hookDownloadSpanCheckFileAndDownLoadDao,
                 )
             }
         }
@@ -133,6 +134,15 @@ class HookDisableLauncherOnlineSearch : HookBaseHandleLoadPackage() {
         val methodName = "getDatabaseType"
         val parameterTypes = emptyArray<Any>()
         val callback = XC_MethodReplacement.returnConstant("global_empty.db")
+
+        executeHook(lpparam, className, methodName, *parameterTypes, callback)
+    }
+
+    private fun hookDownloadSpanCheckFileAndDownLoadDao(lpparam: XC_LoadPackage.LoadPackageParam) {
+        val className = "${lpparam.packageName}.DownloadSpan"
+        val methodName = "checkFileAndDownLoadDao"
+        val parameterTypes = arrayOf<Any>(String::class.java)
+        val callback = XC_MethodReplacement.returnConstant(null)
 
         executeHook(lpparam, className, methodName, *parameterTypes, callback)
     }
