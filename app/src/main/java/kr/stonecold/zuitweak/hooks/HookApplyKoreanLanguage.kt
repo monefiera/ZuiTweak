@@ -8,7 +8,6 @@ import kr.stonecold.zuitweak.R
 import kr.stonecold.zuitweak.XposedInit
 import kr.stonecold.zuitweak.common.Constants
 import kr.stonecold.zuitweak.common.XposedUtil
-import java.util.Locale
 
 @Suppress("unused")
 class HookApplyKoreanLanguage : HookBaseHandleInitPackageResources() {
@@ -22,18 +21,18 @@ class HookApplyKoreanLanguage : HookBaseHandleInitPackageResources() {
 
     override val hookTargetDevice: Array<String> = emptyArray()
     override val hookTargetRegion: Array<String> = arrayOf("PRC")
+    override val hookTargetVersion: Array<String> = emptyArray()
+
     override val hookTargetPackage: Array<String> = arrayOf("com.android.settings")
     override val hookTargetPackageOptional: Array<String> = emptyArray()
 
     override fun handleInitPackageResources(resparam: XC_InitPackageResources.InitPackageResourcesParam) {
-        XposedUtil.xposedDebug(tag, "country: ${Locale.getDefault().country}, language: ${Locale.getDefault().language}")
-
         if (resparam.packageName in hookTargetPackage) {
-            applyKoreanTranslation(resparam)
+            hookApplyKoreanTranslation(resparam)
         }
     }
 
-    private fun applyKoreanTranslation(resparam: XC_InitPackageResources.InitPackageResourcesParam) {
+    private fun hookApplyKoreanTranslation(resparam: XC_InitPackageResources.InitPackageResourcesParam) {
         val packageName = resparam.packageName
         val packageNameBar = packageName.replace(".", "_")
 

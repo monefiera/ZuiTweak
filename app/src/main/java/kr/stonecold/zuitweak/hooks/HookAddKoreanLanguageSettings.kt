@@ -5,6 +5,7 @@ import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.XposedHelpers
 import de.robv.android.xposed.callbacks.XC_LoadPackage
 import kr.stonecold.zuitweak.common.Util
+import kr.stonecold.zuitweak.common.XposedUtil
 import java.util.Locale
 
 @Suppress("unused")
@@ -18,10 +19,12 @@ class HookAddKoreanLanguageSettings : HookBaseHandleLoadPackage() {
 
     override val hookTargetDevice: Array<String> = emptyArray()
     override val hookTargetRegion: Array<String> = arrayOf("PRC")
+    override val hookTargetVersion: Array<String> = emptyArray()
+
     override val hookTargetPackage: Array<String> = arrayOf("com.android.settings")
     override val hookTargetPackageOptional: Array<String> = emptyArray()
 
-    override fun isEnabled(): Boolean {
+    override fun isEnabledCustomCheck(): Boolean {
         val zuiKrPatchEnabled = Util.getProperty("ro.stonecold.krpatch.enabled", "false").uppercase()
         val testModeEnabled = Util.getProperty("persist.sys.lenovo.is_test_mode", "false").uppercase()
         return zuiKrPatchEnabled == "TRUE" || testModeEnabled == "TRUE"
@@ -30,13 +33,10 @@ class HookAddKoreanLanguageSettings : HookBaseHandleLoadPackage() {
     override fun handleLoadPackage(lpparam: XC_LoadPackage.LoadPackageParam) {
         when (lpparam.packageName) {
             "com.android.settings" -> {
-                executeHooks(
-                    lpparam,
-                    ::hookLocaleListEditorGetUserLocaleList,
-                    ::hookLocaleListEditorGetAllLocaleList,
-                    ::hookLocalePickerAxGetSupportedLocales,
-                    ::hookUtilsGetChangedName,
-                )
+                hookLocaleListEditorGetUserLocaleList(lpparam)
+                hookLocaleListEditorGetAllLocaleList(lpparam)
+                hookLocalePickerAxGetSupportedLocales(lpparam)
+                hookUtilsGetChangedName(lpparam)
             }
         }
     }
@@ -49,11 +49,8 @@ class HookAddKoreanLanguageSettings : HookBaseHandleLoadPackage() {
             override fun afterHookedMethod(param: MethodHookParam) {
                 try {
                     val originalList = param.result as List<*>
-                    val koKRLocaleInfo = XposedHelpers.callStaticMethod(
-                        XposedHelpers.findClass("com.android.internal.app.LocaleStore", lpparam.classLoader),
-                        "getLocaleInfo",
-                        Locale.forLanguageTag("ko-KR")
-                    )
+                    val clazz = XposedHelpers.findClass("com.android.internal.app.LocaleStore", lpparam.classLoader)
+                    val koKRLocaleInfo = XposedHelpers.callStaticMethod(clazz, "getLocaleInfo", Locale.forLanguageTag("ko-KR"))
 
                     if (!originalList.contains(koKRLocaleInfo)) {
                         val newList = ArrayList(originalList)
@@ -61,12 +58,12 @@ class HookAddKoreanLanguageSettings : HookBaseHandleLoadPackage() {
                         param.result = newList
                     }
                 } catch (e: Throwable) {
-                    handleHookException(tag, e, className, methodName, *parameterTypes)
+                    XposedUtil.handleHookException(tag, e, className, methodName, *parameterTypes)
                 }
             }
         }
 
-        executeHook(lpparam, className, methodName, *parameterTypes, callback)
+        XposedUtil.executeHook(tag, lpparam, className, methodName, *parameterTypes, callback)
     }
 
     private fun hookLocaleListEditorGetAllLocaleList(lpparam: XC_LoadPackage.LoadPackageParam) {
@@ -77,11 +74,8 @@ class HookAddKoreanLanguageSettings : HookBaseHandleLoadPackage() {
             override fun afterHookedMethod(param: MethodHookParam) {
                 try {
                     val originalList = param.result as List<*>
-                    val koKRLocaleInfo = XposedHelpers.callStaticMethod(
-                        XposedHelpers.findClass("com.android.internal.app.LocaleStore", lpparam.classLoader),
-                        "getLocaleInfo",
-                        Locale.forLanguageTag("ko-KR")
-                    )
+                    val clazz = XposedHelpers.findClass("com.android.internal.app.LocaleStore", lpparam.classLoader)
+                    val koKRLocaleInfo = XposedHelpers.callStaticMethod(clazz, "getLocaleInfo", Locale.forLanguageTag("ko-KR"))
 
                     if (!originalList.contains(koKRLocaleInfo)) {
                         val newList = ArrayList(originalList)
@@ -89,12 +83,12 @@ class HookAddKoreanLanguageSettings : HookBaseHandleLoadPackage() {
                         param.result = newList
                     }
                 } catch (e: Throwable) {
-                    handleHookException(tag, e, className, methodName, *parameterTypes)
+                    XposedUtil.handleHookException(tag, e, className, methodName, *parameterTypes)
                 }
             }
         }
 
-        executeHook(lpparam, className, methodName, *parameterTypes, callback)
+        XposedUtil.executeHook(tag, lpparam, className, methodName, *parameterTypes, callback)
     }
 
     private fun hookLocalePickerAxGetSupportedLocales(lpparam: XC_LoadPackage.LoadPackageParam) {
@@ -107,19 +101,17 @@ class HookAddKoreanLanguageSettings : HookBaseHandleLoadPackage() {
                     val originalLocales = param.result as Array<*>
                     val localesList = originalLocales.toMutableList()
 
-                    // Check and add "ko-KR" if not already present
                     if (!localesList.contains("ko-KR")) {
                         localesList.add("ko-KR")
-                        // Set the modified result back to param
                         param.result = localesList.toTypedArray()
                     }
                 } catch (e: Throwable) {
-                    handleHookException(tag, e, className, methodName, *parameterTypes)
+                    XposedUtil.handleHookException(tag, e, className, methodName, *parameterTypes)
                 }
             }
         }
 
-        executeHook(lpparam, className, methodName, *parameterTypes, callback)
+        XposedUtil.executeHook(tag, lpparam, className, methodName, *parameterTypes, callback)
     }
 
     private fun hookUtilsGetChangedName(lpparam: XC_LoadPackage.LoadPackageParam) {
@@ -142,11 +134,11 @@ class HookAddKoreanLanguageSettings : HookBaseHandleLoadPackage() {
                         param.result = "한국어"
                     }
                 } catch (e: Throwable) {
-                    handleHookException(tag, e, className, methodName, *parameterTypes)
+                    XposedUtil.handleHookException(tag, e, className, methodName, *parameterTypes)
                 }
             }
         }
 
-        executeHook(lpparam, className, methodName, *parameterTypes, callback)
+        XposedUtil.executeHook(tag, lpparam, className, methodName, *parameterTypes, callback)
     }
 }

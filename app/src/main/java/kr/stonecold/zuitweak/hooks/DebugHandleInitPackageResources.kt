@@ -14,6 +14,8 @@ class DebugHandleInitPackageResources : HookBaseHandleInitPackageResources() {
 
     override val hookTargetDevice: Array<String> = emptyArray()
     override val hookTargetRegion: Array<String> = emptyArray()
+    override val hookTargetVersion: Array<String> = emptyArray()
+
     override val hookTargetPackage: Array<String> = emptyArray()
     override val hookTargetPackageOptional: Array<String> = emptyArray()
 

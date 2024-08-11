@@ -3,7 +3,6 @@ package kr.stonecold.zuitweak.hooks
 //noinspection SuspiciousImport
 import android.R
 import android.animation.ArgbEvaluator
-import android.annotation.SuppressLint
 import android.app.AndroidAppHelper
 import android.app.Application
 import android.content.Context
@@ -26,11 +25,13 @@ import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.XC_MethodReplacement
 import de.robv.android.xposed.XposedHelpers
 import de.robv.android.xposed.callbacks.XC_LoadPackage
+import kr.stonecold.zuitweak.common.Constants
+import kr.stonecold.zuitweak.common.XposedUtil
 
 @Suppress("unused")
 class HookChangeNotificationIcon : HookBaseHandleLoadPackage() {
     override val menuItem = HookMenuItem(
-        category = HookMenuCategory.COMMON,
+        category = HookMenuCategory.UNFUCKZUI,
         title = "알림 아이콘 변경",
         description = "알림 아이콘을 CDD 준수 아이콘(테마적용)으로 변경합니다.",
         defaultSelected = false,
@@ -38,6 +39,8 @@ class HookChangeNotificationIcon : HookBaseHandleLoadPackage() {
 
     override val hookTargetDevice: Array<String> = emptyArray()
     override val hookTargetRegion: Array<String> = emptyArray()
+    override val hookTargetVersion: Array<String> = emptyArray()
+
     override val hookTargetPackage: Array<String> = arrayOf("com.android.systemui")
     override val hookTargetPackageOptional: Array<String> = emptyArray()
 
@@ -48,21 +51,28 @@ class HookChangeNotificationIcon : HookBaseHandleLoadPackage() {
     override fun handleLoadPackage(lpparam: XC_LoadPackage.LoadPackageParam) {
         when (lpparam.packageName) {
             "com.android.systemui" -> {
-                executeHooks(
-                    lpparam,
-                    ::hookApplicationOnCreate,
-                    ::hookXSystemUtilIsCTSGTSTest,
-                    ::hookBatteryMeterViewOnDarkChanged,
-                    ::hookDarkIconDispatcherImplConstructor,
-                    ::hookStatusBarIconViewSetStaticDrawableColor,
-                    ::hookNotificationIconAreaControllerGenerateIconLayoutParams,
-                    ::hookCentralSurfacesImplClearStatusBarIcon,
-                    ::hookNotificationHeaderViewWrapperOnContentUpdated,
-                    ::hookNotificationShelfInitDimens,
-                    ::hookNotificationIconContainerInitDimens,
-                    ::hookNotificationInfoBindHeader,
-                    ::hookNotificationIconAreaControllerOnDarkChanged,
-                )
+                hookApplicationOnCreate(lpparam)
+                hookXSystemUtilIsCTSGTSTest(lpparam)
+                hookBatteryMeterViewOnDarkChanged(lpparam)
+                hookDarkIconDispatcherImplConstructor(lpparam)
+                hookStatusBarIconViewSetStaticDrawableColor(lpparam)
+                hookNotificationIconAreaControllerGenerateIconLayoutParams(lpparam)
+                when (Constants.deviceVersion) {
+                    "16.0" -> {
+                        hookZuiCoreImplClearStatusBarIcon(lpparam)
+                        hookNotificationShelfUpdateResources(lpparam)
+                        hookNotificationIconContainerInitResources(lpparam)
+                    }
+
+                    "15.0" -> {
+                        hookCentralSurfacesImplClearStatusBarIcon(lpparam)
+                        hookNotificationShelfInitDimens(lpparam)
+                        hookNotificationIconContainerInitDimens(lpparam)
+                    }
+                }
+                hookNotificationHeaderViewWrapperOnContentUpdated(lpparam)
+                hookNotificationInfoBindHeader(lpparam)
+                hookNotificationIconAreaControllerOnDarkChanged(lpparam)
             }
         }
     }
@@ -78,12 +88,12 @@ class HookChangeNotificationIcon : HookBaseHandleLoadPackage() {
                     pm = systemUiContext!!.packageManager
                 } catch (e: Throwable) {
                     val className = clazz.name
-                    handleHookException(tag, e, className, methodName, *parameterTypes)
+                    XposedUtil.handleHookException(tag, e, className, methodName, *parameterTypes)
                 }
             }
         }
 
-        executeHook(lpparam, clazz, methodName, *parameterTypes, callback)
+        XposedUtil.executeHook(tag, lpparam, clazz, methodName, *parameterTypes, callback)
     }
 
     private fun hookXSystemUtilIsCTSGTSTest(lpparam: XC_LoadPackage.LoadPackageParam) {
@@ -98,12 +108,12 @@ class HookChangeNotificationIcon : HookBaseHandleLoadPackage() {
                         param.result = mode == true
                     }
                 } catch (e: Throwable) {
-                    handleHookException(tag, e, className, methodName, *parameterTypes)
+                    XposedUtil.handleHookException(tag, e, className, methodName, *parameterTypes)
                 }
             }
         }
 
-        executeHook(lpparam, className, methodName, *parameterTypes, callback)
+        XposedUtil.executeHook(tag, lpparam, className, methodName, *parameterTypes, callback)
     }
 
     private fun hookBatteryMeterViewOnDarkChanged(lpparam: XC_LoadPackage.LoadPackageParam) {
@@ -115,7 +125,7 @@ class HookChangeNotificationIcon : HookBaseHandleLoadPackage() {
                 try {
                     isCtsMode.set(java.lang.Boolean.FALSE)
                 } catch (e: Throwable) {
-                    handleHookException(tag, e, className, methodName, *parameterTypes)
+                    XposedUtil.handleHookException(tag, e, className, methodName, *parameterTypes)
                 }
             }
 
@@ -123,12 +133,12 @@ class HookChangeNotificationIcon : HookBaseHandleLoadPackage() {
                 try {
                     isCtsMode.remove()
                 } catch (e: Throwable) {
-                    handleHookException(tag, e, className, methodName, *parameterTypes)
+                    XposedUtil.handleHookException(tag, e, className, methodName, *parameterTypes)
                 }
             }
         }
 
-        executeHook(lpparam, className, methodName, *parameterTypes, callback)
+        XposedUtil.executeHook(tag, lpparam, className, methodName, *parameterTypes, callback)
     }
 
     private fun hookDarkIconDispatcherImplConstructor(lpparam: XC_LoadPackage.LoadPackageParam) {
@@ -146,12 +156,12 @@ class HookChangeNotificationIcon : HookBaseHandleLoadPackage() {
                     XposedHelpers.setIntField(param.thisObject, "mDarkModeIconColorSingleToneCts", -0x21000000)
                     XposedHelpers.setIntField(param.thisObject, "mLightModeIconColorSingleTone", -0x1)
                 } catch (e: Throwable) {
-                    handleHookException(tag, e, className, methodName, *parameterTypes)
+                    XposedUtil.handleHookException(tag, e, className, methodName, *parameterTypes)
                 }
             }
         }
 
-        executeHook(lpparam, className, methodName, *parameterTypes, callback)
+        XposedUtil.executeHook(tag, lpparam, className, methodName, *parameterTypes, callback)
     }
 
     private fun hookStatusBarIconViewSetStaticDrawableColor(lpparam: XC_LoadPackage.LoadPackageParam) {
@@ -171,12 +181,12 @@ class HookChangeNotificationIcon : HookBaseHandleLoadPackage() {
                         XposedHelpers.callMethod(mDozer, "setColor", color)
                     }
                 } catch (e: Throwable) {
-                    handleHookException(tag, e, className, methodName, *parameterTypes)
+                    XposedUtil.handleHookException(tag, e, className, methodName, *parameterTypes)
                 }
             }
         }
 
-        executeHook(lpparam, className, methodName, *parameterTypes, callback)
+        XposedUtil.executeHook(tag, lpparam, className, methodName, *parameterTypes, callback)
     }
 
     private fun hookNotificationIconAreaControllerGenerateIconLayoutParams(lpparam: XC_LoadPackage.LoadPackageParam) {
@@ -194,12 +204,21 @@ class HookChangeNotificationIcon : HookBaseHandleLoadPackage() {
                     lp.height = h.toInt()
                     lp.width += (p * 2).toInt()
                 } catch (e: Throwable) {
-                    handleHookException(tag, e, className, methodName, *parameterTypes)
+                    XposedUtil.handleHookException(tag, e, className, methodName, *parameterTypes)
                 }
             }
         }
 
-        executeHook(lpparam, className, methodName, *parameterTypes, callback)
+        XposedUtil.executeHook(tag, lpparam, className, methodName, *parameterTypes, callback)
+    }
+
+    private fun hookZuiCoreImplClearStatusBarIcon(lpparam: XC_LoadPackage.LoadPackageParam) {
+        val className = "com.android.systemui.statusbar.phone.ZuiCoreImpl"
+        val methodName = "clearStatusBarIcon"
+        val parameterTypes = emptyArray<Any>()
+        val callback = XC_MethodReplacement.returnConstant(null)
+
+        XposedUtil.executeHook(tag, lpparam, className, methodName, *parameterTypes, callback)
     }
 
     private fun hookCentralSurfacesImplClearStatusBarIcon(lpparam: XC_LoadPackage.LoadPackageParam) {
@@ -208,7 +227,7 @@ class HookChangeNotificationIcon : HookBaseHandleLoadPackage() {
         val parameterTypes = emptyArray<Any>()
         val callback = XC_MethodReplacement.returnConstant(null)
 
-        executeHook(lpparam, className, methodName, *parameterTypes, callback)
+        XposedUtil.executeHook(tag, lpparam, className, methodName, *parameterTypes, callback)
     }
 
     private fun hookNotificationHeaderViewWrapperOnContentUpdated(lpparam: XC_LoadPackage.LoadPackageParam) {
@@ -254,12 +273,30 @@ class HookChangeNotificationIcon : HookBaseHandleLoadPackage() {
                     XposedHelpers.callMethod(cachingIconView, "setBackgroundColor", fgColor)
                     XposedHelpers.callMethod(cachingIconView, "setOriginalIconColor", bgColor)
                 } catch (e: Throwable) {
-                    handleHookException(tag, e, className, methodName, *parameterTypes)
+                    XposedUtil.handleHookException(tag, e, className, methodName, *parameterTypes)
                 }
             }
         }
 
-        executeHook(lpparam, className, methodName, *parameterTypes, callback)
+        XposedUtil.executeHook(tag, lpparam, className, methodName, *parameterTypes, callback)
+    }
+
+    private fun hookNotificationShelfUpdateResources(lpparam: XC_LoadPackage.LoadPackageParam) {
+        val className = "com.android.systemui.statusbar.NotificationShelf"
+        val methodName = "updateResources"
+        val parameterTypes = emptyArray<Any>()
+        val callback = object : XC_MethodHook() {
+            override fun afterHookedMethod(param: MethodHookParam) {
+                try {
+                    val mShelfIcons = XposedHelpers.getObjectField(param.thisObject, "mShelfIcons")
+                    XposedHelpers.callMethod(mShelfIcons, "setInNotificationIconShelf", true)
+                } catch (e: Throwable) {
+                    XposedUtil.handleHookException(tag, e, className, methodName, *parameterTypes)
+                }
+            }
+        }
+
+        XposedUtil.executeHook(tag, lpparam, className, methodName, *parameterTypes, callback)
     }
 
     private fun hookNotificationShelfInitDimens(lpparam: XC_LoadPackage.LoadPackageParam) {
@@ -272,12 +309,34 @@ class HookChangeNotificationIcon : HookBaseHandleLoadPackage() {
                     val mShelfIcons = XposedHelpers.getObjectField(param.thisObject, "mShelfIcons")
                     XposedHelpers.callMethod(mShelfIcons, "setInNotificationIconShelf", true)
                 } catch (e: Throwable) {
-                    handleHookException(tag, e, className, methodName, *parameterTypes)
+                    XposedUtil.handleHookException(tag, e, className, methodName, *parameterTypes)
                 }
             }
         }
 
-        executeHook(lpparam, className, methodName, *parameterTypes, callback)
+        XposedUtil.executeHook(tag, lpparam, className, methodName, *parameterTypes, callback)
+    }
+
+    private fun hookNotificationIconContainerInitResources(lpparam: XC_LoadPackage.LoadPackageParam) {
+        val className = "com.android.systemui.statusbar.phone.NotificationIconContainer"
+        val methodName = "initResources"
+        val parameterTypes = emptyArray<Any>()
+        val callback = object : XC_MethodHook() {
+            override fun afterHookedMethod(param: MethodHookParam) {
+                try {
+                    val context = XposedHelpers.getObjectField(param.thisObject, "mContext") as Context
+                    val themedContext: Context = ContextThemeWrapper(context, R.style.Theme_DeviceDefault_DayNight)
+                    themedContext.obtainStyledAttributes(intArrayOf(R.attr.textColorPrimary)).use { attrs ->
+                        val color = attrs.getColorStateList(0)!!.defaultColor
+                        XposedHelpers.setIntField(param.thisObject, "mThemedTextColorPrimary", color)
+                    }
+                } catch (e: Throwable) {
+                    XposedUtil.handleHookException(tag, e, className, methodName, *parameterTypes)
+                }
+            }
+        }
+
+        XposedUtil.executeHook(tag, lpparam, className, methodName, *parameterTypes, callback)
     }
 
     private fun hookNotificationIconContainerInitDimens(lpparam: XC_LoadPackage.LoadPackageParam) {
@@ -294,12 +353,12 @@ class HookChangeNotificationIcon : HookBaseHandleLoadPackage() {
                         XposedHelpers.setIntField(param.thisObject, "mThemedTextColorPrimary", color)
                     }
                 } catch (e: Throwable) {
-                    handleHookException(tag, e, className, methodName, *parameterTypes)
+                    XposedUtil.handleHookException(tag, e, className, methodName, *parameterTypes)
                 }
             }
         }
 
-        executeHook(lpparam, className, methodName, *parameterTypes, callback)
+        XposedUtil.executeHook(tag, lpparam, className, methodName, *parameterTypes, callback)
     }
 
     private fun hookNotificationInfoBindHeader(lpparam: XC_LoadPackage.LoadPackageParam) {
@@ -329,12 +388,12 @@ class HookChangeNotificationIcon : HookBaseHandleLoadPackage() {
                     icon.setImageDrawable(mPkgIcon)
                     XposedHelpers.setObjectField(param.thisObject, "mPkgIcon", mPkgIcon)
                 } catch (e: Throwable) {
-                    handleHookException(tag, e, className, methodName, *parameterTypes)
+                    XposedUtil.handleHookException(tag, e, className, methodName, *parameterTypes)
                 }
             }
         }
 
-        executeHook(lpparam, className, methodName, *parameterTypes, callback)
+        XposedUtil.executeHook(tag, lpparam, className, methodName, *parameterTypes, callback)
     }
 
     private fun hookNotificationIconAreaControllerOnDarkChanged(lpparam: XC_LoadPackage.LoadPackageParam) {
@@ -350,12 +409,12 @@ class HookChangeNotificationIcon : HookBaseHandleLoadPackage() {
                     val mIconTint = argbEvaluator.evaluate(darkIntensity, -0x1, -0x4e000000)
                     param.args[2] = mIconTint
                 } catch (e: Throwable) {
-                    handleHookException(tag, e, className, methodName, *parameterTypes)
+                    XposedUtil.handleHookException(tag, e, className, methodName, *parameterTypes)
                 }
             }
         }
 
-        executeHook(lpparam, className, methodName, *parameterTypes, callback)
+        XposedUtil.executeHook(tag, lpparam, className, methodName, *parameterTypes, callback)
     }
 
     private fun getSystemUiContext(): Context? {

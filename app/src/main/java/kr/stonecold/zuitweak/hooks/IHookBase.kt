@@ -1,14 +1,11 @@
 package kr.stonecold.zuitweak.hooks
 
-import de.robv.android.xposed.XC_MethodHook
-import de.robv.android.xposed.XposedHelpers
+import android.content.Context
 import de.robv.android.xposed.callbacks.XC_InitPackageResources
 import de.robv.android.xposed.callbacks.XC_LoadPackage
+import kr.stonecold.zuitweak.common.Constants
 import kr.stonecold.zuitweak.common.Util
-import kr.stonecold.zuitweak.common.XposedUtil
-import kr.stonecold.zuitweak.common.XposedUtil.LogLevel
-import kr.stonecold.zuitweak.common.XposedUtil.currentLogLevel
-import kotlinx.coroutines.*
+import kr.stonecold.zuitweak.common.XposedPrefsUtil
 
 interface IHookBase {
     val tag: String
@@ -18,6 +15,7 @@ interface IHookBase {
 
     val hookTargetDevice: Array<String>
     val hookTargetRegion: Array<String>
+    val hookTargetVersion: Array<String>
 
     val hookTargetPackage: Array<String>
     val hookTargetPackageOptional: Array<String>
@@ -40,164 +38,155 @@ enum class HookMenuCategory {
     ROW,
     PRC,
     DEVICE,
+    UNFUCKZUI,
     DEVELOPMENT,
 }
 
 abstract class HookBase: IHookBase {
+    override val hookTargetDevice: Array<String>  = emptyArray()
+    override val hookTargetRegion: Array<String> = emptyArray()
+    override val hookTargetVersion: Array<String> = emptyArray()
+
+    override val hookTargetPackage: Array<String> = emptyArray()
     override val hookTargetPackageOptional: Array<String> = emptyArray()
 
     private val methodExistenceMap: MutableMap<String, Boolean?> = mutableMapOf()
 
-    open fun isEnabled(): Boolean {
+    open fun isEnabledCustomCheck(): Boolean {
         return true
     }
 
-    private fun getMetaKey(className: String, methodName: String, vararg parameterTypes: Any): String {
-        val parameterTypeNames = parameterTypes.mapNotNull { param ->
-            when (param) {
-                is Class<*> -> {
-                    if (param.isArray) {
-                        param.componentType.name + "[]"
-                    } else {
-                        param.name
-                    }
-                }
+    fun isEnabledHook(packageName: String): Pair<Boolean, String> {
+        val isHookPrefsEnabled = XposedPrefsUtil.isFeatureEnabled(this.javaClass.simpleName, menuItem.defaultSelected)
+        val isPackageMatch = hookTargetPackage.isEmpty() || (hookTargetPackage.contains(packageName) || hookTargetPackageOptional.contains(packageName))
+        val isDeviceMatch = hookTargetDevice.isEmpty() || hookTargetDevice.contains(Constants.deviceModel)
+        val isRegionMatch = hookTargetRegion.isEmpty() || hookTargetRegion.contains(Constants.deviceRegion)
+        val isVersionMatch = hookTargetVersion.isEmpty() || hookTargetVersion.contains(Constants.deviceVersion)
+        val isEnabledCustom = isEnabledCustomCheck()
 
-                is String -> param
-                else -> null
-            }
-        }.toTypedArray()
-
-        val qualifiedName = if (methodName.isEmpty()) className else "$className.$methodName"
-        val methodKey = "$qualifiedName(${parameterTypeNames.joinToString(",")})"
-
-        return methodKey
-    }
-
-    fun getClassMethodName(className: String, methodName: String, vararg parameterTypes: Any): String {
-        val parameterTypeNames = parameterTypes.mapNotNull { param ->
-            when (param) {
-                is Class<*> -> {
-                    if (param.isArray) {
-                        param.componentType.name + "[]"
-                    } else {
-                        param.name
-                    }
-                }
-
-                is String -> param
-                else -> null
-            }
-        }.toTypedArray()
-
-        val qualifiedName = if (methodName.isEmpty()) className else "$className.$methodName"
-        val classMethodName = "$qualifiedName(${parameterTypeNames.joinToString(",") { it.split(".").last() }})"
-
-        return classMethodName
-    }
-
-    fun checkClassMethod(clazzOrClassName: Any, classLoader: ClassLoader, methodName: String, vararg parameterTypes: Any): Boolean? {
-        require(clazzOrClassName is Class<*> || clazzOrClassName is String) {
-            "Unsupported type: ${clazzOrClassName::class.simpleName}"
+        val result = isHookPrefsEnabled && isPackageMatch && isDeviceMatch && isRegionMatch && isVersionMatch && isEnabledCustom
+        var message = ""
+        val detailInfo = mutableListOf<String>()
+        if (!isHookPrefsEnabled) {
+            @Suppress("KotlinConstantConditions")
+            detailInfo.add("PrefEnabled: $isHookPrefsEnabled")
+        }
+        if (!isPackageMatch) {
+            @Suppress("KotlinConstantConditions")
+            detailInfo.add("PackageMatch: $isPackageMatch")
+        }
+        if (!isDeviceMatch) {
+            @Suppress("KotlinConstantConditions")
+            detailInfo.add("DeviceMatch: $isDeviceMatch")
+        }
+        if (!isRegionMatch) {
+            @Suppress("KotlinConstantConditions")
+            detailInfo.add("RegionMatch: $isRegionMatch")
+        }
+        if (!isVersionMatch) {
+            @Suppress("KotlinConstantConditions")
+            detailInfo.add("VersionMatch: $isVersionMatch")
+        }
+        if (!isEnabledCustom) {
+            @Suppress("KotlinConstantConditions")
+            detailInfo.add("CustomEnabled: $isEnabledCustom")
+        }
+        if (detailInfo.isNotEmpty()) {
+            message = detailInfo.joinToString(", ")
         }
 
-        val className = if (clazzOrClassName is Class<*>) clazzOrClassName.name else clazzOrClassName as String
-        val methodKey = this.getMetaKey(className, methodName, *parameterTypes)
-        val classMethodName = this.getClassMethodName(className, methodName, *parameterTypes)
-
-        if (methodExistenceMap[methodKey] == null) {
-            val methodExists = Util.getMethod(clazzOrClassName, classLoader, methodName, *parameterTypes) != null
-            methodExistenceMap[methodKey] = methodExists
-
-            XposedUtil.xposedDebug(tag, "Method existence check for $classMethodName: $methodExists")
-        }
-
-        return methodExistenceMap[methodKey]
+        return Pair(result, message)
     }
 
-    fun executeHooks(lpparam: XC_LoadPackage.LoadPackageParam, vararg hooks: (XC_LoadPackage.LoadPackageParam) -> Unit) {
-        CoroutineScope(Dispatchers.Default).launch {
-            val jobs = hooks.map { hook ->
-                async {
-                    withContext(Dispatchers.Default) {
-                        hook(lpparam)
-                    }
-                }
-            }
-            jobs.awaitAll()
+    fun isEnabledMenu(context: Context): Pair<Boolean, String> {
+        val isPackageMatch = hookTargetPackage.all { pkg -> Util.isPackageInstalled(context, pkg) }
+        val isDeviceMatch = hookTargetDevice.isEmpty() || hookTargetDevice.contains(Constants.deviceModel)
+        val isRegionMatch = hookTargetRegion.isEmpty() || hookTargetRegion.contains(Constants.deviceRegion)
+        val isVersionMatch = hookTargetVersion.isEmpty() || hookTargetVersion.contains(Constants.deviceVersion)
+        val isEnabledCustom = isEnabledCustomCheck()
+
+        val result = isPackageMatch && isDeviceMatch && isRegionMatch && isVersionMatch && isEnabledCustom
+        var message = ""
+        val detailInfo = mutableListOf<String>()
+        if (!isPackageMatch) {
+            @Suppress("KotlinConstantConditions")
+            detailInfo.add("PackageMatch: $isPackageMatch")
         }
+        if (!isDeviceMatch) {
+            @Suppress("KotlinConstantConditions")
+            detailInfo.add("DeviceMatch: $isDeviceMatch")
+        }
+        if (!isRegionMatch) {
+            @Suppress("KotlinConstantConditions")
+            detailInfo.add("RegionMatch: $isRegionMatch")
+        }
+        if (!isVersionMatch) {
+            @Suppress("KotlinConstantConditions")
+            detailInfo.add("VersionMatch: $isVersionMatch")
+        }
+        if (!isEnabledCustom) {
+            @Suppress("KotlinConstantConditions")
+            detailInfo.add("CustomEnabled: $isEnabledCustom")
+        }
+        if (detailInfo.isNotEmpty()) {
+            message = detailInfo.joinToString(", ")
+        }
+
+        return Pair(result, message)
     }
 
     override fun handleLoadPackage(lpparam: XC_LoadPackage.LoadPackageParam) {}
 
     override fun handleInitPackageResources(resparam: XC_InitPackageResources.InitPackageResourcesParam) {}
-
-    fun handleHookException(tag:String, e: Throwable, clazzOrClassName: Any,  methodName: String, vararg parameterTypes: Any) {
-        if (currentLogLevel.level < LogLevel.ERROR.level) {
-            return
-        }
-
-        require(clazzOrClassName is Class<*> || (clazzOrClassName is String && clazzOrClassName.isNotEmpty())) {
-            "Unsupported type: ${clazzOrClassName::class.simpleName}"
-        }
-
-        val className = if (clazzOrClassName is Class<*>) clazzOrClassName.name else clazzOrClassName as String
-        val classMethodName = this.getClassMethodName(className, methodName, *parameterTypes)
-        val stackTraceString = e.stackTrace.joinToString("\n") { element ->
-            "at ${element.className}.${element.methodName}(${element.fileName}:${element.lineNumber})"
-        }
-
-        XposedUtil.xposedException(tag, "Error occurred while hooking $classMethodName: ${e.message}\nStack Trace:\n${stackTraceString}"
-        )
-    }
 }
 
 abstract class HookBaseHandleLoadPackage : HookBase() {
-    open fun executeHook(lpparam: XC_LoadPackage.LoadPackageParam, clazzOrClassName: Any, methodName: String, vararg parameterTypesAndCallback: Any) {
-        require(clazzOrClassName is Class<*> || (clazzOrClassName is String && clazzOrClassName.isNotEmpty())) {
-            "Unsupported type: ${clazzOrClassName::class.simpleName}"
+    open val hookTargetPackageRes: Array<String> = emptyArray()
+
+    open var updateRes: ((resparam: XC_InitPackageResources.InitPackageResourcesParam) -> Unit)? = null
+
+    fun isEnabledHookRes(packageName: String): Pair<Boolean, String> {
+        val isHookPrefsEnabled = XposedPrefsUtil.isFeatureEnabled(this.javaClass.simpleName, menuItem.defaultSelected)
+        val isPackageMatch = hookTargetPackageRes.contains(packageName)
+        val isDeviceMatch = hookTargetDevice.isEmpty() || hookTargetDevice.contains(Constants.deviceModel)
+        val isRegionMatch = hookTargetRegion.isEmpty() || hookTargetRegion.contains(Constants.deviceRegion)
+        val isVersionMatch = hookTargetVersion.isEmpty() || hookTargetVersion.contains(Constants.deviceVersion)
+        val isEnabledCustom = isEnabledCustomCheck()
+
+        val result = isHookPrefsEnabled && isPackageMatch && isDeviceMatch && isRegionMatch && isVersionMatch && isEnabledCustom
+        var message = ""
+        val detailInfo = mutableListOf<String>()
+        if (!isHookPrefsEnabled) {
+            @Suppress("KotlinConstantConditions")
+            detailInfo.add("PrefEnabled: $isHookPrefsEnabled")
         }
-        require(parameterTypesAndCallback.isNotEmpty() && parameterTypesAndCallback.last() is XC_MethodHook) {
-            "No callback defined"
+        if (!isPackageMatch) {
+            @Suppress("KotlinConstantConditions")
+            detailInfo.add("PackageMatch: $isPackageMatch")
+        }
+        if (!isDeviceMatch) {
+            @Suppress("KotlinConstantConditions")
+            detailInfo.add("DeviceMatch: $isDeviceMatch")
+        }
+        if (!isRegionMatch) {
+            @Suppress("KotlinConstantConditions")
+            detailInfo.add("RegionMatch: $isRegionMatch")
+        }
+        if (!isVersionMatch) {
+            @Suppress("KotlinConstantConditions")
+            detailInfo.add("VersionMatch: $isVersionMatch")
+        }
+        if (!isEnabledCustom) {
+            @Suppress("KotlinConstantConditions")
+            detailInfo.add("CustomEnabled: $isEnabledCustom")
+        }
+        if (detailInfo.isNotEmpty()) {
+            message = detailInfo.joinToString(", ")
         }
 
-        val parameterTypes = parameterTypesAndCallback.dropLast(1).toTypedArray()
-        val callback = parameterTypesAndCallback.last() as XC_MethodHook
-        val className = if (clazzOrClassName is Class<*>) clazzOrClassName.name else clazzOrClassName as String
-        val classMethodName = getClassMethodName(className, methodName, *parameterTypes)
-
-        var successRegister = true
-        try {
-            if (checkClassMethod(className, lpparam.classLoader, methodName, *parameterTypes) != true) {
-                XposedUtil.xposedError(tag, "Failed to register hook for $classMethodName: class or method was not found")
-                successRegister = false
-            } else {
-                if (clazzOrClassName is Class<*>) {
-                    if (methodName.isNotEmpty()) {
-                        XposedHelpers.findAndHookMethod(clazzOrClassName, methodName, *parameterTypes, callback)
-                    } else {
-                        XposedHelpers.findAndHookConstructor(clazzOrClassName, *parameterTypes, callback)
-                    }
-                } else {
-                    if (methodName.isNotEmpty()) {
-                        XposedHelpers.findAndHookMethod(className, lpparam.classLoader, methodName, *parameterTypes, callback)
-                    } else {
-                        XposedHelpers.findAndHookConstructor(className, lpparam.classLoader, *parameterTypes, callback)
-                    }
-                }
-            }
-        } catch (e: Throwable) {
-            val stackTraceString = e.stackTrace.joinToString("\n") { element ->
-                "at ${element.className}.${element.methodName}(${element.fileName}:${element.lineNumber})"
-            }
-            XposedUtil.xposedException(tag, "Failed to register hook for $classMethodName: ${e.message}\nStack Trace:\n${stackTraceString}")
-            successRegister = false
-        }
-
-        if (successRegister) {
-            XposedUtil.xposedInfo(tag, "Successfully registered hook for $classMethodName")
-        }
+        return Pair(result, message)
     }
+
 }
 
 abstract class HookBaseHandleInitPackageResources : HookBase()

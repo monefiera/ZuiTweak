@@ -2,6 +2,7 @@ package kr.stonecold.zuitweak.hooks
 
 import de.robv.android.xposed.XC_MethodReplacement
 import de.robv.android.xposed.callbacks.XC_LoadPackage
+import kr.stonecold.zuitweak.common.XposedUtil
 
 @Suppress("unused")
 class HookDisableStudyLauncher : HookBaseHandleLoadPackage() {
@@ -14,16 +15,15 @@ class HookDisableStudyLauncher : HookBaseHandleLoadPackage() {
 
     override val hookTargetDevice: Array<String> = emptyArray()
     override val hookTargetRegion: Array<String> = arrayOf("PRC")
+    override val hookTargetVersion: Array<String> = emptyArray()
+
     override val hookTargetPackage: Array<String> = arrayOf("com.android.settings")
     override val hookTargetPackageOptional: Array<String> = emptyArray()
 
     override fun handleLoadPackage(lpparam: XC_LoadPackage.LoadPackageParam) {
         when (lpparam.packageName) {
             "com.android.settings" -> {
-                executeHooks(
-                    lpparam,
-                    ::hookTopLevelStudyLauncherPreferenceControllerGetAvailabilityStatus,
-                )
+                hookTopLevelStudyLauncherPreferenceControllerGetAvailabilityStatus(lpparam)
             }
         }
     }
@@ -34,6 +34,6 @@ class HookDisableStudyLauncher : HookBaseHandleLoadPackage() {
         val parameterTypes = emptyArray<Any>()
         val callback = XC_MethodReplacement.returnConstant(3)
 
-        executeHook(lpparam, className, methodName, *parameterTypes, callback)
+        XposedUtil.executeHook(tag, lpparam, className, methodName, *parameterTypes, callback)
     }
 }

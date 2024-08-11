@@ -3,6 +3,7 @@ package kr.stonecold.zuitweak.hooks
 import de.robv.android.xposed.XC_MethodReplacement
 import de.robv.android.xposed.XposedHelpers
 import de.robv.android.xposed.callbacks.XC_LoadPackage
+import kr.stonecold.zuitweak.common.XposedUtil
 
 @Suppress("unused")
 class HookRemovePrcInfo : HookBaseHandleLoadPackage() {
@@ -15,18 +16,17 @@ class HookRemovePrcInfo : HookBaseHandleLoadPackage() {
 
     override val hookTargetDevice: Array<String> = emptyArray()
     override val hookTargetRegion: Array<String> = arrayOf("PRC")
+    override val hookTargetVersion: Array<String> = emptyArray()
+
     override val hookTargetPackage: Array<String> = arrayOf("com.android.settings")
     override val hookTargetPackageOptional: Array<String> = emptyArray()
 
     override fun handleLoadPackage(lpparam: XC_LoadPackage.LoadPackageParam) {
         when (lpparam.packageName) {
             "com.android.settings" -> {
-                executeHooks(
-                    lpparam,
-                    ::hookAboutDeviceFragmentUpdateRowPreference,
-                    ::hookAboutDeviceFragmentUpdateShenqiService,
-                    ::hookAboutDeviceFragmentCheckIntentTblenovoCenter,
-                )
+                hookAboutDeviceFragmentUpdateRowPreference(lpparam)
+                hookAboutDeviceFragmentUpdateShenqiService(lpparam)
+                hookAboutDeviceFragmentCheckIntentTblenovoCenter(lpparam)
             }
         }
     }
@@ -43,12 +43,12 @@ class HookRemovePrcInfo : HookBaseHandleLoadPackage() {
                     XposedHelpers.callMethod(param.thisObject, "removePreference", "key_shenqi_serve_line")
                     XposedHelpers.callMethod(param.thisObject, "removePreference", "key_shenqi_serve")
                 } catch (e: Throwable) {
-                    handleHookException(tag, e, className, methodName, *parameterTypes)
+                    XposedUtil.handleHookException(tag, e, className, methodName, *parameterTypes)
                 }
             }
         }
 
-        executeHook(lpparam, className, methodName, *parameterTypes, callback)
+        XposedUtil.executeHook(tag, lpparam, className, methodName, *parameterTypes, callback)
     }
 
     private fun hookAboutDeviceFragmentUpdateShenqiService(lpparam: XC_LoadPackage.LoadPackageParam) {
@@ -60,12 +60,12 @@ class HookRemovePrcInfo : HookBaseHandleLoadPackage() {
                 try {
                     XposedHelpers.callMethod(param.thisObject, "removePreference", "key_shenqi_serve")
                 } catch (e: Throwable) {
-                    handleHookException(tag, e, className, methodName, *parameterTypes)
+                    XposedUtil.handleHookException(tag, e, className, methodName, *parameterTypes)
                 }
             }
         }
 
-        executeHook(lpparam, className, methodName, *parameterTypes, callback)
+        XposedUtil.executeHook(tag, lpparam, className, methodName, *parameterTypes, callback)
     }
 
     private fun hookAboutDeviceFragmentCheckIntentTblenovoCenter(lpparam: XC_LoadPackage.LoadPackageParam) {
@@ -77,11 +77,11 @@ class HookRemovePrcInfo : HookBaseHandleLoadPackage() {
                 try {
                     XposedHelpers.callMethod(param.thisObject, "removePreference", "feed_back")
                 } catch (e: Throwable) {
-                    handleHookException(tag, e, className, methodName, *parameterTypes)
+                    XposedUtil.handleHookException(tag, e, className, methodName, *parameterTypes)
                 }
             }
         }
 
-        executeHook(lpparam, className, methodName, *parameterTypes, callback)
+        XposedUtil.executeHook(tag, lpparam, className, methodName, *parameterTypes, callback)
     }
 }

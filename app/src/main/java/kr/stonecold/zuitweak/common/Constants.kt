@@ -6,4 +6,16 @@ import kr.stonecold.zuitweak.BuildConfig
 object Constants {
     const val APPLICATION_ID = BuildConfig.APPLICATION_ID
     const val PREFS_NAME = "feature_config"
+
+    val deviceModel: String by lazy {
+        return@lazy Util.getModel()
+    }
+
+    val deviceRegion: String by lazy {
+        return@lazy Util.getProperty("ro.config.lgsi.region", "UNKNOWN").uppercase()
+    }
+
+    val deviceVersion: String by lazy {
+        return@lazy Util.getProperty("ro.com.zui.version", "UNKNOWN").uppercase()
+    }
 }

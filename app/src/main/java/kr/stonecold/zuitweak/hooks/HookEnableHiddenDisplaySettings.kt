@@ -3,6 +3,9 @@ package kr.stonecold.zuitweak.hooks
 import android.content.Context
 import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.callbacks.XC_LoadPackage
+import kr.stonecold.zuitweak.common.Constants
+import kr.stonecold.zuitweak.common.XposedUtil
+
 
 @Suppress("unused")
 class HookEnableHiddenDisplaySettings : HookBaseHandleLoadPackage() {
@@ -15,18 +18,101 @@ class HookEnableHiddenDisplaySettings : HookBaseHandleLoadPackage() {
 
     override val hookTargetDevice: Array<String> = emptyArray()
     override val hookTargetRegion: Array<String> = emptyArray()
+    override val hookTargetVersion: Array<String> = emptyArray()
+
     override val hookTargetPackage: Array<String> = arrayOf("com.android.settings")
     override val hookTargetPackageOptional: Array<String> = emptyArray()
 
     override fun handleLoadPackage(lpparam: XC_LoadPackage.LoadPackageParam) {
         when (lpparam.packageName) {
             "com.android.settings" -> {
-                executeHooks(lpparam,
-                    ::hookUtilsIsFeatureEnabled,
-                    ::hookSettingsPreferenceFragmentRemovePreference,
-                )
+                when (Constants.deviceVersion) {
+                    "16.0" -> {
+                        hookAutoColorPreferenceControllerGetAvailabilityStatus(lpparam)
+                        hookGameEnhancePreferenceControllerGetAvailabilityStatus(lpparam)
+                        hookVideoColorEnhancePreferenceControllerGetAvailabilityStatus(lpparam)
+                        hookVideoQualityEnhancePreferenceControllerGetAvailabilityStatus(lpparam)
+                    }
+
+                    "15.0" -> {
+                        hookUtilsIsFeatureEnabled(lpparam)
+                        hookSettingsPreferenceFragmentRemovePreference(lpparam)
+                    }
+                }
             }
         }
+    }
+
+    private fun hookAutoColorPreferenceControllerGetAvailabilityStatus(lpparam: XC_LoadPackage.LoadPackageParam) {
+        val className = "com.lenovo.settings.display.AutoColorPreferenceController"
+        val methodName = "getAvailabilityStatus"
+        val parameterTypes = emptyArray<Any>()
+        val callback = object : XC_MethodHook() {
+            override fun afterHookedMethod(param: MethodHookParam) {
+                try {
+                    XposedUtil.xposedDebug(tag, "param.result: ${param.result}")
+                    param.result = 0
+                } catch (e: Throwable) {
+                    XposedUtil.handleHookException(tag, e, className, methodName, *parameterTypes)
+                }
+            }
+        }
+
+        XposedUtil.executeHook(tag, lpparam, className, methodName, *parameterTypes, callback)
+    }
+
+    private fun hookGameEnhancePreferenceControllerGetAvailabilityStatus(lpparam: XC_LoadPackage.LoadPackageParam) {
+        val className = "com.lenovo.settings.display.GameEnhancePreferenceController"
+        val methodName = "getAvailabilityStatus"
+        val parameterTypes = emptyArray<Any>()
+        val callback = object : XC_MethodHook() {
+            override fun afterHookedMethod(param: MethodHookParam) {
+                try {
+                    XposedUtil.xposedDebug(tag, "param.result: ${param.result}")
+                    param.result = 0
+                } catch (e: Throwable) {
+                    XposedUtil.handleHookException(tag, e, className, methodName, *parameterTypes)
+                }
+            }
+        }
+
+        XposedUtil.executeHook(tag, lpparam, className, methodName, *parameterTypes, callback)
+    }
+
+    private fun hookVideoColorEnhancePreferenceControllerGetAvailabilityStatus(lpparam: XC_LoadPackage.LoadPackageParam) {
+        val className = "com.lenovo.settings.display.VideoColorEnhancePreferenceController"
+        val methodName = "getAvailabilityStatus"
+        val parameterTypes = emptyArray<Any>()
+        val callback = object : XC_MethodHook() {
+            override fun afterHookedMethod(param: MethodHookParam) {
+                try {
+                    XposedUtil.xposedDebug(tag, "param.result: ${param.result}")
+                    param.result = 0
+                } catch (e: Throwable) {
+                    XposedUtil.handleHookException(tag, e, className, methodName, *parameterTypes)
+                }
+            }
+        }
+
+        XposedUtil.executeHook(tag, lpparam, className, methodName, *parameterTypes, callback)
+    }
+
+    private fun hookVideoQualityEnhancePreferenceControllerGetAvailabilityStatus(lpparam: XC_LoadPackage.LoadPackageParam) {
+        val className = "com.lenovo.settings.display.VideoQualityEnhancePreferenceController"
+        val methodName = "getAvailabilityStatus"
+        val parameterTypes = emptyArray<Any>()
+        val callback = object : XC_MethodHook() {
+            override fun afterHookedMethod(param: MethodHookParam) {
+                try {
+                    XposedUtil.xposedDebug(tag, "param.result: ${param.result}")
+                    param.result = 0
+                } catch (e: Throwable) {
+                    XposedUtil.handleHookException(tag, e, className, methodName, *parameterTypes)
+                }
+            }
+        }
+
+        XposedUtil.executeHook(tag, lpparam, className, methodName, *parameterTypes, callback)
     }
 
     private fun hookUtilsIsFeatureEnabled(lpparam: XC_LoadPackage.LoadPackageParam) {
@@ -41,12 +127,12 @@ class HookEnableHiddenDisplaySettings : HookBaseHandleLoadPackage() {
                         param.result = true
                     }
                 } catch (e: Throwable) {
-                    handleHookException(tag, e, className, methodName, *parameterTypes)
+                    XposedUtil.handleHookException(tag, e, className, methodName, *parameterTypes)
                 }
             }
         }
 
-        executeHook(lpparam, className, methodName, *parameterTypes, callback)
+        XposedUtil.executeHook(tag, lpparam, className, methodName, *parameterTypes, callback)
     }
 
     private fun hookSettingsPreferenceFragmentRemovePreference(lpparam: XC_LoadPackage.LoadPackageParam) {
@@ -69,11 +155,11 @@ class HookEnableHiddenDisplaySettings : HookBaseHandleLoadPackage() {
                         param.result = false
                     }
                 } catch (e: Throwable) {
-                    handleHookException(tag, e, className, methodName, *parameterTypes)
+                    XposedUtil.handleHookException(tag, e, className, methodName, *parameterTypes)
                 }
             }
         }
 
-        executeHook(lpparam, className, methodName, *parameterTypes, callback)
+        XposedUtil.executeHook(tag, lpparam, className, methodName, *parameterTypes, callback)
     }
 }

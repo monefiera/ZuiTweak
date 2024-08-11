@@ -13,7 +13,7 @@ import kr.stonecold.zuitweak.common.XposedUtil
 @Suppress("unused")
 class HookChangePackageInstaller : HookBaseHandleLoadPackage() {
     override val menuItem = HookMenuItem(
-        category = HookMenuCategory.PRC,
+        category = HookMenuCategory.UNFUCKZUI,
         title = "Package Installer 변경",
         description = "Package Installer를 AOSP 스타일로 변경합니다.",
         defaultSelected = false,
@@ -21,18 +21,17 @@ class HookChangePackageInstaller : HookBaseHandleLoadPackage() {
 
     override val hookTargetDevice: Array<String> = emptyArray()
     override val hookTargetRegion: Array<String> = arrayOf("PRC")
+    override val hookTargetVersion: Array<String> = emptyArray()
+
     override val hookTargetPackage: Array<String> = arrayOf("com.android.packageinstaller")
     override val hookTargetPackageOptional: Array<String> = emptyArray()
 
     override fun handleLoadPackage(lpparam: XC_LoadPackage.LoadPackageParam) {
         when (lpparam.packageName) {
             "com.android.packageinstaller" -> {
-                executeHooks(
-                    lpparam,
-                    ::hookUtilsIsCTSandGTS,
-                    ::hookUtilsIsCTSandGTS2,
-                    ::hookInstallStartOnCreate,
-                )
+                hookUtilsIsCTSandGTS(lpparam)
+                hookUtilsIsCTSandGTS2(lpparam)
+                hookInstallStartOnCreate(lpparam)
 
                 val rStyleCls = XposedHelpers.findClass("com.android.packageinstaller.R\$style", lpparam.classLoader)
                 val newStyleId = XposedHelpers.getStaticIntField(rStyleCls, "Theme_AlertDialogActivity")
@@ -48,7 +47,7 @@ class HookChangePackageInstaller : HookBaseHandleLoadPackage() {
         val parameterTypes = arrayOf<Any>(String::class.java)
         val callback = XC_MethodReplacement.returnConstant(true)
 
-        executeHook(lpparam, className, methodName, *parameterTypes, callback)
+        XposedUtil.executeHook(tag, lpparam, className, methodName, *parameterTypes, callback)
     }
 
     private fun hookUtilsIsCTSandGTS2(lpparam: XC_LoadPackage.LoadPackageParam) {
@@ -57,7 +56,7 @@ class HookChangePackageInstaller : HookBaseHandleLoadPackage() {
         val parameterTypes = arrayOf<Any>(String::class.java, Intent::class.java)
         val callback = XC_MethodReplacement.returnConstant(true)
 
-        executeHook(lpparam, className, methodName, *parameterTypes, callback)
+        XposedUtil.executeHook(tag, lpparam, className, methodName, *parameterTypes, callback)
     }
 
     private fun hookPackageInstallerActivityOnCreate(lpparam: XC_LoadPackage.LoadPackageParam, newStyleId: Int) {
@@ -66,7 +65,7 @@ class HookChangePackageInstaller : HookBaseHandleLoadPackage() {
         val parameterTypes = arrayOf<Any>(Bundle::class.java)
         val callback = ActivityStyleHook(newStyleId, true)
 
-        executeHook(lpparam, className, methodName, *parameterTypes, callback)
+        XposedUtil.executeHook(tag, lpparam, className, methodName, *parameterTypes, callback)
     }
 
     private fun hookInstallStagingOnCreate(lpparam: XC_LoadPackage.LoadPackageParam, newStyleId: Int) {
@@ -75,7 +74,7 @@ class HookChangePackageInstaller : HookBaseHandleLoadPackage() {
         val parameterTypes = arrayOf<Any>(Bundle::class.java)
         val callback = ActivityStyleHook(newStyleId, true)
 
-        executeHook(lpparam, className, methodName, *parameterTypes, callback)
+        XposedUtil.executeHook(tag, lpparam, className, methodName, *parameterTypes, callback)
     }
 
     private fun hookInstallStartOnCreate(lpparam: XC_LoadPackage.LoadPackageParam) {
@@ -84,7 +83,7 @@ class HookChangePackageInstaller : HookBaseHandleLoadPackage() {
         val parameterTypes = arrayOf<Any>(Bundle::class.java)
         val callback = ActivityStyleHook(android.R.style.Theme_Translucent_NoTitleBar, false)
 
-        executeHook(lpparam, className, methodName, *parameterTypes, callback)
+        XposedUtil.executeHook(tag, lpparam, className, methodName, *parameterTypes, callback)
     }
 
     private class ActivityStyleHook(private val newStyleId: Int, private val overrideAnimation: Boolean) : XC_MethodHook() {

@@ -5,7 +5,7 @@ import de.robv.android.xposed.IXposedHookLoadPackage
 import de.robv.android.xposed.IXposedHookZygoteInit
 import de.robv.android.xposed.callbacks.XC_InitPackageResources
 import de.robv.android.xposed.callbacks.XC_LoadPackage
-import kr.stonecold.zuitweak.common.Util
+import kr.stonecold.zuitweak.common.Constants
 import kr.stonecold.zuitweak.common.XposedPrefsUtil
 import kr.stonecold.zuitweak.common.XposedUtil
 import kr.stonecold.zuitweak.hooks.*
@@ -16,8 +16,6 @@ class XposedInit : IXposedHookZygoteInit, IXposedHookLoadPackage, IXposedHookIni
 
     companion object {
         var modulePath: String? = null
-        var deviceModel: String? = null
-        var deviceRegion: String? = null
         lateinit var handleLoadPackagePackages: Array<String>
         lateinit var handleInitPackageResourcesPackages: Array<String>
     }
@@ -29,12 +27,6 @@ class XposedInit : IXposedHookZygoteInit, IXposedHookLoadPackage, IXposedHookIni
 
         modulePath = startupParam.modulePath
         XposedUtil.xposedDebug(tag, "Module Path: $modulePath")
-
-        deviceModel = Util.getModel()
-        XposedUtil.xposedDebug(tag, "Device Model: $deviceModel")
-
-        deviceRegion = Util.getProperty("ro.config.lgsi.region", "UNKNOWN").uppercase()
-        XposedUtil.xposedDebug(tag, "Device Region: $deviceRegion")
 
         val hooks = HookManager.getAllHooks()
 
@@ -56,8 +48,8 @@ class XposedInit : IXposedHookZygoteInit, IXposedHookLoadPackage, IXposedHookIni
     }
 
     override fun handleLoadPackage(lpparam: XC_LoadPackage.LoadPackageParam?) {
-        if (deviceModel != "TB371FC" && deviceModel != "TB320FC") {
-            XposedUtil.xposedError(tag, "Device Model: $deviceModel - This device is not supported")
+        if (Constants.deviceModel != "TB371FC" && Constants.deviceModel != "TB320FC") {
+            XposedUtil.xposedError(tag, "Device Model: ${Constants.deviceModel} - This device is not supported")
             return
         }
         if (lpparam == null) {
@@ -85,25 +77,20 @@ class XposedInit : IXposedHookZygoteInit, IXposedHookLoadPackage, IXposedHookIni
         XposedPrefsUtil.reload()
 
         filterHooks.forEach { hook ->
+            val localTag = "${hook.javaClass.simpleName}[${lpparam.packageName}]"
             try {
-                XposedUtil.xposedDebug(tag, "Checking hook: ${hook.javaClass.simpleName}")
+                XposedUtil.xposedDebug(localTag, "Checking hook")
 
-                val isHookPrefsEnabled = XposedPrefsUtil.isFeatureEnabled(hook.javaClass.simpleName, hook.menuItem.defaultSelected)
-                val isPackageMatch = hook.hookTargetPackage.contains(lpparam.packageName)
-                val isDeviceMatch = hook.hookTargetDevice.isEmpty() || hook.hookTargetDevice.contains(deviceModel)
-                val isRegionMatch = hook.hookTargetRegion.isEmpty() || hook.hookTargetRegion.contains(deviceRegion)
-                val isEnabled = hook.isEnabled()
+                val (isEnabled, message) = hook.isEnabledHook(lpparam.packageName)
 
-                XposedUtil.xposedDebug(tag, "Hook: ${hook.javaClass.simpleName}, PrefsEnabled: $isHookPrefsEnabled, PackageMatch: $isPackageMatch, DeviceMatch: $isDeviceMatch, RegionMatch: $isRegionMatch, FunEnabled: $isEnabled")
-
-                if (isHookPrefsEnabled && isPackageMatch && isDeviceMatch && isRegionMatch && isEnabled) {
-                    XposedUtil.xposedInfo(tag, "handleLoadPackage triggered for: ${hook.javaClass.simpleName}")
+                if (isEnabled) {
+                    XposedUtil.xposedInfo(localTag, "handleLoadPackage triggered")
                     hook.handleLoadPackage(lpparam)
                 } else {
-                    XposedUtil.xposedDebug(tag, "handleLoadPackage not triggered for: ${hook.javaClass.simpleName}")
+                    XposedUtil.xposedDebug(localTag, "handleLoadPackage not triggered: $message")
                 }
             } catch (e: Exception) {
-                XposedUtil.xposedException(tag, "Error during handleLoadPackage for: ${hook.javaClass.simpleName}: ${e.message}")
+                XposedUtil.xposedException(localTag, "Error during handleLoadPackage: ${e.message}")
             }
         }
     }
@@ -113,8 +100,8 @@ class XposedInit : IXposedHookZygoteInit, IXposedHookLoadPackage, IXposedHookIni
     }
 
     override fun handleInitPackageResources(resparam: XC_InitPackageResources.InitPackageResourcesParam?) {
-        if (deviceModel != "TB371FC" && deviceModel != "TB320FC") {
-            XposedUtil.xposedError(tag, "Device Model: $deviceModel - This device is not supported")
+        if (Constants.deviceModel != "TB371FC" && Constants.deviceModel != "TB320FC") {
+            XposedUtil.xposedError(tag, "Device Model: ${Constants.deviceModel} - This device is not supported")
             return
         }
         if (resparam == null) {
@@ -142,47 +129,54 @@ class XposedInit : IXposedHookZygoteInit, IXposedHookLoadPackage, IXposedHookIni
         XposedUtil.xposedInfo(tag, "HandleInitPackageResources Loaded App: ${resparam.packageName}")
 
         filterHooks.forEach { hook ->
+            val localTag = "${hook.javaClass.simpleName}[${resparam.packageName}]"
             try {
-                XposedUtil.xposedDebug(tag, "Checking hook: ${hook.javaClass.simpleName}")
+                XposedUtil.xposedDebug(localTag, "Checking hook")
 
-                val isHookPrefsEnabled = XposedPrefsUtil.isFeatureEnabled(hook.javaClass.simpleName, hook.menuItem.defaultSelected)
-                val isPackageMatch = hook.hookTargetPackage.contains(resparam.packageName)
-                val isDeviceMatch = hook.hookTargetDevice.isEmpty() || hook.hookTargetDevice.contains(deviceModel)
-                val isRegionMatch = hook.hookTargetRegion.isEmpty() || hook.hookTargetRegion.contains(deviceRegion)
-                val isEnabled = hook.isEnabled()
+                val (isEnabled, message) = hook.isEnabledHook(resparam.packageName)
 
-                XposedUtil.xposedDebug(tag, "Hook: ${hook.javaClass.simpleName}, PrefsEnabled: $isHookPrefsEnabled, PackageMatch: $isPackageMatch, DeviceMatch: $isDeviceMatch, RegionMatch: $isRegionMatch, FunEnabled: $isEnabled")
-
-                if (isHookPrefsEnabled && isPackageMatch && isDeviceMatch && isRegionMatch && isEnabled) {
-                    XposedUtil.xposedInfo(tag, "handleInitPackageResources triggered for: ${hook.javaClass.simpleName}")
+                if (isEnabled) {
+                    XposedUtil.xposedInfo(localTag, "handleInitPackageResources triggered")
                     hook.handleInitPackageResources(resparam)
                 } else {
-                    XposedUtil.xposedDebug(tag, "handleInitPackageResources not triggered for: ${hook.javaClass.simpleName}")
+                    XposedUtil.xposedDebug(localTag, "handleInitPackageResources not triggered: $message")
                 }
             } catch (e: Exception) {
-                XposedUtil.xposedException(tag, "Error during handleInitPackageResources for: ${hook.javaClass.simpleName}: ${e.message}")
+                XposedUtil.xposedException(localTag, "Error during handleInitPackageResources: ${e.message}")
             }
         }
     }
 
     private fun handleInitPackageResourcesCustom(resparam: XC_InitPackageResources.InitPackageResourcesParam) {
-        //돌비 아트모스
-        if (resparam.packageName == "com.android.settings" || resparam.packageName == "com.android.systemui") {
-            XposedUtil.xposedDebug(tag, "package: ${resparam.packageName}")
-            val hook = HookManager.getHook(HookAllowDisableDolbyAtmosForBuiltinSpeakers::class.java) ?: return
-            val hookName = HookAllowDisableDolbyAtmosForBuiltinSpeakersRes::class.simpleName
+        val hooks = HookManager.getAllHooks()
 
-            val isHookPrefsEnabled = XposedPrefsUtil.isFeatureEnabled(hook.javaClass.simpleName, hook.menuItem.defaultSelected)
-            val isPackageMatch = hook.hookTargetPackage.contains(resparam.packageName)
-            val isDeviceMatch = hook.hookTargetDevice.isEmpty() || hook.hookTargetDevice.contains(deviceModel)
-            val isRegionMatch = hook.hookTargetRegion.isEmpty() || hook.hookTargetRegion.contains(deviceRegion)
-            val isEnabled = hook.isEnabled()
+        val filterHooks = hooks.filterIsInstance<HookBaseHandleLoadPackage>()
+            .filter { hook -> hook.updateRes != null && hook.hookTargetPackageRes.contains(resparam.packageName) }
+            .filter { hook -> !hook.menuItem.isDebug || BuildConfig.DEBUG }
 
-            XposedUtil.xposedDebug(tag, "Hook: $hookName, PrefsEnabled: $isHookPrefsEnabled, PackageMatch: $isPackageMatch, DeviceMatch: $isDeviceMatch, RegionMatch: $isRegionMatch, FunEnabled: $isEnabled")
+        if (filterHooks.isEmpty()) {
+            return
+        }
 
-            if (isHookPrefsEnabled && isPackageMatch && isDeviceMatch && isRegionMatch && isEnabled) {
-                XposedUtil.xposedInfo(tag, "handleInitPackageResources triggered for: $hookName")
-                HookAllowDisableDolbyAtmosForBuiltinSpeakersRes.updateDescription(resparam)
+        XposedPrefsUtil.reload()
+
+        XposedUtil.xposedInfo(tag, "HandleInitPackageResources Loaded App: ${resparam.packageName}")
+
+        filterHooks.forEach { hook ->
+            val localTag = "${hook.javaClass.simpleName}[${resparam.packageName}]"
+            try {
+                XposedUtil.xposedDebug(localTag, "Checking hook")
+
+                val (isEnabled, message) = hook.isEnabledHookRes(resparam.packageName)
+
+                if (isEnabled) {
+                    XposedUtil.xposedInfo(localTag, "updateRes triggered")
+                    hook.updateRes?.invoke(resparam)
+                } else {
+                    XposedUtil.xposedDebug(localTag, "updateRes not triggered: $message")
+                }
+            } catch (e: Exception) {
+                XposedUtil.xposedException(localTag, "Error during updateRes: ${e.message}")
             }
         }
     }

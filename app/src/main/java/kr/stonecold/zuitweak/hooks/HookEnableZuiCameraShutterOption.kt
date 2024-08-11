@@ -2,6 +2,7 @@ package kr.stonecold.zuitweak.hooks
 
 import de.robv.android.xposed.XC_MethodReplacement
 import de.robv.android.xposed.callbacks.XC_LoadPackage
+import kr.stonecold.zuitweak.common.XposedUtil
 
 @Suppress("unused")
 class HookEnableZuiCameraShutterOption : HookBaseHandleLoadPackage() {
@@ -14,16 +15,15 @@ class HookEnableZuiCameraShutterOption : HookBaseHandleLoadPackage() {
 
     override val hookTargetDevice: Array<String> = emptyArray()
     override val hookTargetRegion: Array<String> = emptyArray()
+    override val hookTargetVersion: Array<String> = emptyArray()
+
     override val hookTargetPackage: Array<String> = arrayOf("com.zui.camera")
     override val hookTargetPackageOptional: Array<String> = emptyArray()
 
     override fun handleLoadPackage(lpparam: XC_LoadPackage.LoadPackageParam) {
         when (lpparam.packageName) {
             "com.zui.camera" -> {
-                executeHooks(
-                    lpparam,
-                    ::hookApiHelperIsForceCameraSound,
-                )
+                hookApiHelperIsForceCameraSound(lpparam)
             }
         }
     }
@@ -34,6 +34,6 @@ class HookEnableZuiCameraShutterOption : HookBaseHandleLoadPackage() {
         val parameterTypes = emptyArray<Any>()
         val callback = XC_MethodReplacement.returnConstant(false)
 
-        executeHook(lpparam, className, methodName, *parameterTypes, callback)
+        XposedUtil.executeHook(tag, lpparam, className, methodName, *parameterTypes, callback)
     }
 }

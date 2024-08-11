@@ -3,6 +3,7 @@ package kr.stonecold.zuitweak.hooks
 import de.robv.android.xposed.XC_MethodReplacement
 import de.robv.android.xposed.callbacks.XC_LoadPackage
 import kr.stonecold.zuitweak.common.Util
+import kr.stonecold.zuitweak.common.XposedUtil
 
 @Suppress("unused")
 class HookFixBatteryIconTestMode : HookBaseHandleLoadPackage() {
@@ -15,10 +16,12 @@ class HookFixBatteryIconTestMode : HookBaseHandleLoadPackage() {
 
     override val hookTargetDevice: Array<String> = emptyArray()
     override val hookTargetRegion: Array<String> = arrayOf("PRC")
+    override val hookTargetVersion: Array<String> = emptyArray()
+
     override val hookTargetPackage: Array<String> = arrayOf("com.android.systemui")
     override val hookTargetPackageOptional: Array<String> = emptyArray()
 
-    override fun isEnabled(): Boolean {
+    override fun isEnabledCustomCheck(): Boolean {
         val testModeValue = Util.getProperty("persist.sys.lenovo.is_test_mode", "false").uppercase()
         return testModeValue == "TRUE"
     }
@@ -26,10 +29,7 @@ class HookFixBatteryIconTestMode : HookBaseHandleLoadPackage() {
     override fun handleLoadPackage(lpparam: XC_LoadPackage.LoadPackageParam) {
         when (lpparam.packageName) {
             "com.android.systemui" -> {
-                executeHooks(
-                    lpparam,
-                    ::hookXSystemUtilIsCTSGTSTest,
-                )
+                hookXSystemUtilIsCTSGTSTest(lpparam)
             }
         }
     }
@@ -40,6 +40,6 @@ class HookFixBatteryIconTestMode : HookBaseHandleLoadPackage() {
         val parameterTypes = emptyArray<Any>()
         val callback = XC_MethodReplacement.returnConstant(false)
 
-        executeHook(lpparam, className, methodName, *parameterTypes, callback)
+        XposedUtil.executeHook(tag, lpparam, className, methodName, *parameterTypes, callback)
     }
 }

@@ -27,6 +27,7 @@ import kr.stonecold.zuitweak.ui.theme.ZuiTweakTheme
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.platform.LocalContext
 import com.topjohnwu.superuser.Shell
+import kr.stonecold.zuitweak.common.Constants
 import kr.stonecold.zuitweak.common.SharedPrefsUtil
 import kr.stonecold.zuitweak.common.Util
 
@@ -106,7 +107,7 @@ private fun reloadSettings(context: Context) {
 
     val commands = mutableListOf<String>()
 
-    packagesToReload
+    packagesToReload.distinct()
         .filter { it != "android" }
         .forEach { pkg ->
             val result = Shell.cmd("pidof $pkg").exec()
@@ -134,7 +135,7 @@ private fun reloadSettings(context: Context) {
 
 @Composable
 fun AppContent(modifier: Modifier = Modifier) {
-    val deviceModel = remember { Util.getModel() }
+    val deviceModel = remember { Constants.deviceModel }
     var isRooted by remember { mutableStateOf(false) }
     var region by remember { mutableStateOf("") }
     val isModuleEnabled by remember { mutableStateOf(SharedPrefsUtil.isInitialized) }
@@ -145,7 +146,7 @@ fun AppContent(modifier: Modifier = Modifier) {
     LaunchedEffect(Unit) {
         scope.launch {
             isRooted = Util.isDeviceRooted()
-            region = Util.getProperty("ro.config.lgsi.orgregion", "ro.config.lgsi.region", "UNKNOWN").uppercase()
+            region = Constants.deviceRegion
         }
     }
 
@@ -282,7 +283,7 @@ fun AppContent(modifier: Modifier = Modifier) {
         val isSupportedDevice = (deviceModel == "TB371FC" || deviceModel == "TB320FC")
 
         items(categories) { (category, options) ->
-            CategorySection(category = category, options = options.map { it.copy(isDisabled = !isSupportedDevice || it.isDisabled) }, context = context)
+            CategorySection(category = category, options = options.map { it.copy(isEnabledOption = isSupportedDevice && it.isEnabledOption) }, context = context)
         }
 
         item {
@@ -392,7 +393,7 @@ fun CategorySection(category: String, options: List<HookOption>, context: Contex
         )
         Spacer(modifier = Modifier.height(8.dp))
         options.forEach { option ->
-            if (option.isDisabled && SharedPrefsUtil.isInitialized) {
+            if (SharedPrefsUtil.isInitialized && !option.isEnabledOption) {
                 SharedPrefsUtil.deleteOptionValue(option.key)
             }
             OptionItem(context = context, option = option)
@@ -403,7 +404,7 @@ fun CategorySection(category: String, options: List<HookOption>, context: Contex
 @Composable
 fun OptionItem(context: Context, option: HookOption, modifier: Modifier = Modifier) {
     var isChecked by remember { mutableStateOf(SharedPrefsUtil.isInitialized && SharedPrefsUtil.getOptionValue(option.key, option.defaultEnabled)) }
-    val isDisabled by remember { mutableStateOf(!SharedPrefsUtil.isInitialized || option.isDisabled) }
+    val isEnabled by remember { mutableStateOf(SharedPrefsUtil.isInitialized && option.isEnabledOption) }
 
     Column(
             modifier = modifier
@@ -429,7 +430,7 @@ fun OptionItem(context: Context, option: HookOption, modifier: Modifier = Modifi
                             Toast.makeText(context, "Settings changed. Please reboot for changes to take effect.", Toast.LENGTH_LONG).show()
                         }
                     },
-                    enabled = !isDisabled
+                    enabled = isEnabled
             )
         }
         Text(

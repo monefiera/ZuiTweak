@@ -5,54 +5,43 @@ import de.robv.android.xposed.callbacks.XC_LoadPackage
 import kr.stonecold.zuitweak.common.XposedUtil
 
 @Suppress("unused")
-class HookEnableOneVisionSmartRotation : HookBaseHandleLoadPackage() {
+class HookEnableTurnScreenOn : HookBaseHandleLoadPackage() {
     override val menuItem = HookMenuItem(
-        category = HookMenuCategory.PRC,
-        title = "Smart Rotation 활성화",
-        description = "One Vision의 Smart Rotation 기능을 활성화 합니다. (Smart Split 대체)",
+        category = HookMenuCategory.COMMON,
+        title = "화면 켜기 허용",
+        description = "앱에서 화면을 켜기 허용을 활성화 합니다.",
         defaultSelected = false,
     )
 
     override val hookTargetDevice: Array<String> = emptyArray()
-    override val hookTargetRegion: Array<String> = arrayOf("PRC")
+    override val hookTargetRegion: Array<String> = arrayOf("ROW")
     override val hookTargetVersion: Array<String> = emptyArray()
 
     override val hookTargetPackage: Array<String> = arrayOf("com.android.settings")
     override val hookTargetPackageOptional: Array<String> = emptyArray()
 
-    val matchCriteria = arrayOf(
-        "com.android.settings.onevision.OneVisionSettingsFragment" to emptyArray<String>(),
-        "com.android.settings.applications.apphorizontal.AppHorizontalSettingsFragment" to emptyArray<String>(),
-        "com.android.settings.applications.apphorizontal.AppHorizontalSettingsFragment\$RecyclerAdapter" to emptyArray<String>(),
-        "com.android.settings.applications.apphorizontal.AppHorizontalSettingsFragment\$SettingsObserver" to emptyArray<String>(),
-        "com.android.settings.onevision.OneVisionSettingsFragment" to emptyArray<String>(),
-    )
-
     override fun handleLoadPackage(lpparam: XC_LoadPackage.LoadPackageParam) {
         when (lpparam.packageName) {
             "com.android.settings" -> {
-                hookUtilsIsPrcVersion(lpparam)
-                hookUtilsIsRowVersion(lpparam)
+                hookSettingsPreferenceFragmentRemovePreference(lpparam)
+                hookLenovoUtilIsPrcVersion(lpparam)
             }
         }
     }
 
-    private fun hookUtilsIsPrcVersion(lpparam: XC_LoadPackage.LoadPackageParam) {
-        val className = "com.android.settings.Utils"
-        val methodName = "isPrcVersion"
-        val parameterTypes = emptyArray<Class<*>>()
+    private fun hookSettingsPreferenceFragmentRemovePreference(lpparam: XC_LoadPackage.LoadPackageParam) {
+        val preferenceNamesToCheck = setOf(
+            "turn_screen_on",
+        )
+
+        val className = "com.android.settings.SettingsPreferenceFragment"
+        val methodName = "removePreference"
+        val parameterTypes = arrayOf<Any>(String::class.java)
         val callback = object : XC_MethodHook() {
             override fun beforeHookedMethod(param: MethodHookParam) {
                 try {
-                    val stackTrace = Thread.currentThread().stackTrace
-                    val calledFromElement = stackTrace.find { element ->
-                        matchCriteria.any { (className, methods) ->
-                            element.className == className && !methods.contains(element.methodName)
-                        }
-                    }
-
-                    if (calledFromElement != null) {
-                        XposedUtil.xposedDebug(tag, "$methodName method called from class: ${calledFromElement.className}, method: ${calledFromElement.methodName}")
+                    val preferenceName = param.args[0] as String
+                    if (preferenceName in preferenceNamesToCheck) {
                         param.result = false
                     }
                 } catch (e: Throwable) {
@@ -64,17 +53,24 @@ class HookEnableOneVisionSmartRotation : HookBaseHandleLoadPackage() {
         XposedUtil.executeHook(tag, lpparam, className, methodName, *parameterTypes, callback)
     }
 
-    private fun hookUtilsIsRowVersion(lpparam: XC_LoadPackage.LoadPackageParam) {
-        val className = "com.android.settings.Utils"
-        val methodName = "isRowVersion"
-        val parameterTypes = emptyArray<Class<*>>()
+    private fun hookLenovoUtilIsPrcVersion(lpparam: XC_LoadPackage.LoadPackageParam) {
+        val matchCriteria = arrayOf(
+            "com.android.settings.applications.specialaccess.SpecialAccessSettings" to emptyArray<String>(),
+        )
+        val className = "com.lenovo.common.utils.LenovoUtils"
+        val methodName = "isPrcVersion"
+        val parameterTypes = emptyArray<Any>()
         val callback = object : XC_MethodHook() {
             override fun beforeHookedMethod(param: MethodHookParam) {
                 try {
                     val stackTrace = Thread.currentThread().stackTrace
                     val calledFromElement = stackTrace.find { element ->
                         matchCriteria.any { (className, methods) ->
-                            element.className == className && !methods.contains(element.methodName)
+                            if (methods.isEmpty()) {
+                                element.className.startsWith(className)
+                            } else {
+                                element.className == className && methods.contains(element.methodName)
+                            }
                         }
                     }
 

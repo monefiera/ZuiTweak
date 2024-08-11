@@ -21,17 +21,16 @@ class HookChangeKeyboardHotkeys : HookBaseHandleLoadPackage() {
 
     override val hookTargetDevice: Array<String> = arrayOf("TB371FC")
     override val hookTargetRegion: Array<String> = emptyArray()
+    override val hookTargetVersion: Array<String> = emptyArray()
+
     override val hookTargetPackage: Array<String> = arrayOf("android")
     override val hookTargetPackageOptional: Array<String> = emptyArray()
 
     override fun handleLoadPackage(lpparam: XC_LoadPackage.LoadPackageParam) {
         when (lpparam.packageName) {
             "android" -> {
-                executeHooks(
-                    lpparam,
-                    ::hookKeyboardZuiKeyInputPolicyInterceptKeyBeforeDispatchingBefore,
-                    ::hookKeyInputPolicyBaseIsLearningModeEnabled,
-                )
+                hookKeyboardZuiKeyInputPolicyInterceptKeyBeforeDispatchingBefore(lpparam)
+                hookKeyInputPolicyBaseIsLearningModeEnabled(lpparam)
             }
         }
     }
@@ -105,21 +104,21 @@ class HookChangeKeyboardHotkeys : HookBaseHandleLoadPackage() {
                         }
                     }
                 } catch (e: Throwable) {
-                    handleHookException(tag, e, className, methodName, *parameterTypes)
+                    XposedUtil.handleHookException(tag, e, className, methodName, *parameterTypes)
                 }
             }
         }
 
-        executeHook(lpparam, className, methodName, *parameterTypes, callback)
+        XposedUtil.executeHook(tag, lpparam, className, methodName, *parameterTypes, callback)
     }
 
     private fun hookKeyInputPolicyBaseIsLearningModeEnabled(lpparam: XC_LoadPackage.LoadPackageParam) {
         val className = "com.zui.server.input.keyboard.key.policy.base.KeyInputPolicyBase"
         val methodName = "isLearningModeEnabled"
         val parameterTypes = emptyArray<Any>()
-                val callback = XC_MethodReplacement.returnConstant(false)
+        val callback = XC_MethodReplacement.returnConstant(false)
 
-        executeHook(lpparam, className, methodName, *parameterTypes, callback)
+        XposedUtil.executeHook(tag, lpparam, className, methodName, *parameterTypes, callback)
     }
 
     private fun runnableKeyEvent(obj: Any, event: KeyEvent) {

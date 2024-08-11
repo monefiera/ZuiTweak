@@ -3,6 +3,8 @@ package kr.stonecold.zuitweak.hooks
 import android.content.Context
 import de.robv.android.xposed.XC_MethodReplacement
 import de.robv.android.xposed.callbacks.XC_LoadPackage
+import kr.stonecold.zuitweak.common.XposedUtil
+
 
 @Suppress("unused")
 class HookDisableLauncherOnlineSearch : HookBaseHandleLoadPackage() {
@@ -15,25 +17,25 @@ class HookDisableLauncherOnlineSearch : HookBaseHandleLoadPackage() {
 
     override val hookTargetDevice: Array<String> = emptyArray()
     override val hookTargetRegion: Array<String> = arrayOf("PRC")
+    override val hookTargetVersion: Array<String> = emptyArray()
+
     override val hookTargetPackage: Array<String> = arrayOf("com.zui.launcher")
     override val hookTargetPackageOptional: Array<String> = arrayOf("com.zui.desktoplauncher")
 
     override fun handleLoadPackage(lpparam: XC_LoadPackage.LoadPackageParam) {
         when (lpparam.packageName) {
             "com.zui.launcher", "com.zui.desktoplauncher" -> {
-                executeHooks(
-                    lpparam,
-                    ::hookGraphicsUtilsIsZuiRow,
-                    ::hookUtilitiesIsZuiRow,
-                    ::hookHotWordDownLoadHotWordDownLoad,
-                    ::hookQuicksAppDownLoadDownLoadQuicksApp,
-                    ::hookQuicksAppDownLoadDownloadAllData,
-                    ::hookSearchDownloadHelperDownloadGameApp,
-                    ::hookSearchDownloadHelperGetGameAppList,
-                    ::hookInternetGlobalSearchIsInternetSearchEnabled,
-                    ::hookGlobalSearchUtilsGetDatabaseType,
-                    ::hookDownloadSpanCheckFileAndDownLoadDao,
-                )
+                hookGraphicsUtilsIsZuiRow(lpparam)
+                hookUtilitiesIsZuiRow(lpparam)
+                hookHotWordDownLoadHotWordDownLoad(lpparam)
+                hookQuicksAppDownLoadDownLoadQuicksApp(lpparam)
+                hookQuicksAppDownLoadDownloadAllData(lpparam)
+                hookSearchDownloadHelperDownloadGameApp(lpparam)
+                hookSearchDownloadHelperGetGameAppList(lpparam)
+                hookInternetGlobalSearchIsInternetSearchEnabled(lpparam)
+                hookGlobalSearchUtilsGetDatabaseType(lpparam)
+                hookDownloadSpanCheckFileAndDownLoadDao(lpparam)
+                hookUtilitiesIsOverlayEnabled(lpparam)
             }
         }
     }
@@ -44,7 +46,7 @@ class HookDisableLauncherOnlineSearch : HookBaseHandleLoadPackage() {
         val parameterTypes = emptyArray<Any>()
         val callback = XC_MethodReplacement.returnConstant(false)
 
-        executeHook(lpparam, className, methodName, *parameterTypes, callback)
+        XposedUtil.executeHook(tag, lpparam, className, methodName, *parameterTypes, callback)
     }
 
     private fun hookUtilitiesIsZuiRow(lpparam: XC_LoadPackage.LoadPackageParam) {
@@ -53,7 +55,7 @@ class HookDisableLauncherOnlineSearch : HookBaseHandleLoadPackage() {
         val parameterTypes = emptyArray<Any>()
         val callback = XC_MethodReplacement.returnConstant(true)
 
-        executeHook(lpparam, className, methodName, *parameterTypes, callback)
+        XposedUtil.executeHook(tag, lpparam, className, methodName, *parameterTypes, callback)
     }
 
     private fun hookHotWordDownLoadHotWordDownLoad(lpparam: XC_LoadPackage.LoadPackageParam) {
@@ -65,7 +67,7 @@ class HookDisableLauncherOnlineSearch : HookBaseHandleLoadPackage() {
         )
         val callback = XC_MethodReplacement.returnConstant(null)
 
-        executeHook(lpparam, className, methodName, *parameterTypes, callback)
+        XposedUtil.executeHook(tag, lpparam, className, methodName, *parameterTypes, callback)
     }
 
     private fun hookQuicksAppDownLoadDownLoadQuicksApp(lpparam: XC_LoadPackage.LoadPackageParam) {
@@ -78,7 +80,7 @@ class HookDisableLauncherOnlineSearch : HookBaseHandleLoadPackage() {
         )
         val callback = XC_MethodReplacement.returnConstant(null)
 
-        executeHook(lpparam, className, methodName, *parameterTypes, callback)
+        XposedUtil.executeHook(tag, lpparam, className, methodName, *parameterTypes, callback)
     }
 
     private fun hookQuicksAppDownLoadDownloadAllData(lpparam: XC_LoadPackage.LoadPackageParam) {
@@ -91,7 +93,7 @@ class HookDisableLauncherOnlineSearch : HookBaseHandleLoadPackage() {
         )
         val callback = XC_MethodReplacement.returnConstant(null)
 
-        executeHook(lpparam, className, methodName, *parameterTypes, callback)
+        XposedUtil.executeHook(tag, lpparam, className, methodName, *parameterTypes, callback)
     }
 
     private fun hookSearchDownloadHelperDownloadGameApp(lpparam: XC_LoadPackage.LoadPackageParam) {
@@ -105,7 +107,7 @@ class HookDisableLauncherOnlineSearch : HookBaseHandleLoadPackage() {
         )
         val callback = XC_MethodReplacement.returnConstant(null)
 
-        executeHook(lpparam, className, methodName, *parameterTypes, callback)
+        XposedUtil.executeHook(tag, lpparam, className, methodName, *parameterTypes, callback)
     }
 
     private fun hookSearchDownloadHelperGetGameAppList(lpparam: XC_LoadPackage.LoadPackageParam) {
@@ -117,7 +119,7 @@ class HookDisableLauncherOnlineSearch : HookBaseHandleLoadPackage() {
         )
         val callback = XC_MethodReplacement.returnConstant(null)
 
-        executeHook(lpparam, className, methodName, *parameterTypes, callback)
+        XposedUtil.executeHook(tag, lpparam, className, methodName, *parameterTypes, callback)
     }
 
     private fun hookInternetGlobalSearchIsInternetSearchEnabled(lpparam: XC_LoadPackage.LoadPackageParam) {
@@ -126,7 +128,7 @@ class HookDisableLauncherOnlineSearch : HookBaseHandleLoadPackage() {
         val parameterTypes = emptyArray<Any>()
         val callback = XC_MethodReplacement.returnConstant(false)
 
-        executeHook(lpparam, className, methodName, *parameterTypes, callback)
+        XposedUtil.executeHook(tag, lpparam, className, methodName, *parameterTypes, callback)
     }
 
     private fun hookGlobalSearchUtilsGetDatabaseType(lpparam: XC_LoadPackage.LoadPackageParam) {
@@ -135,7 +137,7 @@ class HookDisableLauncherOnlineSearch : HookBaseHandleLoadPackage() {
         val parameterTypes = emptyArray<Any>()
         val callback = XC_MethodReplacement.returnConstant("global_empty.db")
 
-        executeHook(lpparam, className, methodName, *parameterTypes, callback)
+        XposedUtil.executeHook(tag, lpparam, className, methodName, *parameterTypes, callback)
     }
 
     private fun hookDownloadSpanCheckFileAndDownLoadDao(lpparam: XC_LoadPackage.LoadPackageParam) {
@@ -144,6 +146,15 @@ class HookDisableLauncherOnlineSearch : HookBaseHandleLoadPackage() {
         val parameterTypes = arrayOf<Any>(String::class.java)
         val callback = XC_MethodReplacement.returnConstant(null)
 
-        executeHook(lpparam, className, methodName, *parameterTypes, callback)
+        XposedUtil.executeHook(tag, lpparam, className, methodName, *parameterTypes, callback)
+    }
+
+    private fun hookUtilitiesIsOverlayEnabled(lpparam: XC_LoadPackage.LoadPackageParam) {
+        val className = "${lpparam.packageName}.Utilities"
+        val methodName = "isOverlayEnabled"
+        val parameterTypes = arrayOf<Any>(Context::class.java)
+        val callback = XC_MethodReplacement.returnConstant(true)
+
+        XposedUtil.executeHook(tag, lpparam, className, methodName, *parameterTypes, callback)
     }
 }

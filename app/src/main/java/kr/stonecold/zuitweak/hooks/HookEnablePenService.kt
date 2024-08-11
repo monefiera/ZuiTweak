@@ -3,36 +3,33 @@ package kr.stonecold.zuitweak.hooks
 import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.XposedHelpers
 import de.robv.android.xposed.callbacks.XC_LoadPackage
+import kr.stonecold.zuitweak.common.Util
 import kr.stonecold.zuitweak.common.XposedUtil
 
 @Suppress("unused")
 class HookEnablePenService: HookBaseHandleLoadPackage() {
     override val menuItem = HookMenuItem(
-        category = HookMenuCategory.COMMON,
+        category = HookMenuCategory.DEVICE,
         title = "Pen 서비스 활성화",
         description = "Pairing 없이 Pen Service를 활성화하여 호환 펜 사용이 가능하도록 합니다.",
         defaultSelected = false,
     )
 
-    override val hookTargetDevice: Array<String> = emptyArray()
+    override val hookTargetDevice: Array<String> = arrayOf("TB371FC")
     override val hookTargetRegion: Array<String> = emptyArray()
+    override val hookTargetVersion: Array<String> = emptyArray()
+
     override val hookTargetPackage: Array<String> = arrayOf("android", "com.lenovo.penservice")
     override val hookTargetPackageOptional: Array<String> = emptyArray()
 
     override fun handleLoadPackage(lpparam: XC_LoadPackage.LoadPackageParam) {
         when (lpparam.packageName) {
             "android" -> {
-                executeHooks(
-                    lpparam,
-                    ::hookBluetoothPenConnectPolicyInitSystemProperties,
-                )
+                hookBluetoothPenConnectPolicyInitSystemProperties(lpparam)
             }
 
             "com.lenovo.penservice" -> {
-                executeHooks(
-                    lpparam,
-                    ::hookBtPenModelsGetBTPenNames,
-                )
+                hookBtPenModelsGetBTPenNames(lpparam)
             }
         }
     }
@@ -44,23 +41,28 @@ class HookEnablePenService: HookBaseHandleLoadPackage() {
         val callback = object : XC_MethodHook() {
             override fun beforeHookedMethod(param: MethodHookParam) {
                 try {
-                    val thisObject = param.thisObject
-                    if (checkClassMethod(className, lpparam.classLoader, "updateTpModeStatus", Boolean::class.java, Int::class.java) == true) {
+                    var findMethod = false
+                    if (Util.getMethod(className, lpparam.classLoader, "updateTpModeStatus", Boolean::class.java, Int::class.java) != null) {
                         // TB371FC 방식
-                        XposedHelpers.callMethod(thisObject, "updateTpModeStatus", true, 1)
-                    } else if (checkClassMethod(className, lpparam.classLoader, "updateTpModeStatus", Boolean::class.java) == true) {
+                        XposedHelpers.callMethod(param.thisObject, "updateTpModeStatus", true, 1)
+                        findMethod = true
+                    } else if (Util.getMethod(className, lpparam.classLoader, "updateTpModeStatus", Boolean::class.java) != null) {
                         // TB320FC 방식
-                        XposedHelpers.callMethod(thisObject, "updateTpModeStatus", true)
+                        XposedHelpers.callMethod(param.thisObject, "updateTpModeStatus", true)
+                        findMethod = true
                     } else {
                         XposedUtil.xposedError(tag, "Failed to find updateTpModeStatus method")
                     }
+                    if (findMethod) {
+                        param.result = null
+                    }
                 } catch (e: Throwable) {
-                    handleHookException(tag, e, className, methodName, *parameterTypes)
+                    XposedUtil.handleHookException(tag, e, className, methodName, *parameterTypes)
                 }
             }
         }
 
-        executeHook(lpparam, className, methodName, *parameterTypes, callback)
+        XposedUtil.executeHook(tag, lpparam, className, methodName, *parameterTypes, callback)
     }
 
     private fun hookBtPenModelsGetBTPenNames(lpparam: XC_LoadPackage.LoadPackageParam) {
@@ -87,11 +89,11 @@ class HookEnablePenService: HookBaseHandleLoadPackage() {
                         param.result = modifiedList
                     }
                 } catch (e: Throwable) {
-                    handleHookException(tag, e, className, methodName, *parameterTypes)
+                    XposedUtil.handleHookException(tag, e, className, methodName, *parameterTypes)
                 }
             }
         }
 
-        executeHook(lpparam, className, methodName, *parameterTypes, callback)
+        XposedUtil.executeHook(tag, lpparam, className, methodName, *parameterTypes, callback)
     }
 }

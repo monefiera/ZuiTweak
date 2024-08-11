@@ -8,11 +8,12 @@ import android.view.Window
 import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.XC_MethodReplacement
 import de.robv.android.xposed.callbacks.XC_LoadPackage
+import kr.stonecold.zuitweak.common.XposedUtil
 
 @Suppress("unused")
 class HookChangePermissionController : HookBaseHandleLoadPackage() {
     override val menuItem = HookMenuItem(
-        category = HookMenuCategory.PRC,
+        category = HookMenuCategory.UNFUCKZUI,
         title = "Permission Controller 변경",
         description = "Permission Controller를 AOSP 스타일로 변경합니다.",
         defaultSelected = false,
@@ -20,17 +21,16 @@ class HookChangePermissionController : HookBaseHandleLoadPackage() {
 
     override val hookTargetDevice: Array<String> = emptyArray()
     override val hookTargetRegion: Array<String> = arrayOf("PRC")
+    override val hookTargetVersion: Array<String> = emptyArray()
+
     override val hookTargetPackage: Array<String> = arrayOf("com.android.permissioncontroller")
     override val hookTargetPackageOptional: Array<String> = emptyArray()
 
     override fun handleLoadPackage(lpparam: XC_LoadPackage.LoadPackageParam) {
         when (lpparam.packageName) {
             "com.android.permissioncontroller" -> {
-                executeHooks(
-                    lpparam,
-                    ::hookZuiUtilsIsCTSandGTS,
-                    ::hookGrantPermissionsActivityOnCreate,
-                )
+                hookZuiUtilsIsCTSandGTS(lpparam)
+                hookGrantPermissionsActivityOnCreate(lpparam)
             }
         }
     }
@@ -41,7 +41,7 @@ class HookChangePermissionController : HookBaseHandleLoadPackage() {
         val parameterTypes = arrayOf<Any>(String::class.java)
         val callback = XC_MethodReplacement.returnConstant(true)
 
-        executeHook(lpparam, className, methodName, *parameterTypes, callback)
+        XposedUtil.executeHook(tag, lpparam, className, methodName, *parameterTypes, callback)
     }
 
     private fun hookGrantPermissionsActivityOnCreate(lpparam: XC_LoadPackage.LoadPackageParam) {
@@ -58,11 +58,11 @@ class HookChangePermissionController : HookBaseHandleLoadPackage() {
                     rootView.setFilterTouchesWhenObscured(true)
                     rootView.setPadding(0, 0, 0, 0)
                 } catch (e: Throwable) {
-                    handleHookException(tag, e, className, methodName, *parameterTypes)
+                    XposedUtil.handleHookException(tag, e, className, methodName, *parameterTypes)
                 }
             }
         }
 
-        executeHook(lpparam, className, methodName, *parameterTypes, callback)
+        XposedUtil.executeHook(tag, lpparam, className, methodName, *parameterTypes, callback)
     }
 }

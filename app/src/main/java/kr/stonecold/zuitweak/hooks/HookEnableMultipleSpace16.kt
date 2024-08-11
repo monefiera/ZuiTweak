@@ -4,9 +4,6 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import android.os.UserManager
-import android.view.View
-import android.widget.LinearLayout
 import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.XC_MethodReplacement
 import de.robv.android.xposed.XposedHelpers
@@ -14,8 +11,9 @@ import de.robv.android.xposed.callbacks.XC_LoadPackage
 import kr.stonecold.zuitweak.common.Util
 import kr.stonecold.zuitweak.common.XposedUtil
 
+
 @Suppress("unused")
-class HookEnableMultipleSpace : HookBaseHandleLoadPackage() {
+class HookEnableMultipleSpace16 : HookBaseHandleLoadPackage() {
     override val menuItem = HookMenuItem(
         category = HookMenuCategory.ROW,
         title = "Multiple Space 활성화",
@@ -25,7 +23,9 @@ class HookEnableMultipleSpace : HookBaseHandleLoadPackage() {
 
     override val hookTargetDevice: Array<String> = emptyArray()
     override val hookTargetRegion: Array<String> = arrayOf("ROW")
-    override val hookTargetPackage: Array<String> = arrayOf("com.android.settings", "com.zui.launcher")
+    override val hookTargetVersion: Array<String> = emptyArray()
+
+    override val hookTargetPackage: Array<String> = arrayOf("android", "com.android.systemui", "com.android.settings", "com.zui.launcher")
     override val hookTargetPackageOptional: Array<String> = arrayOf("com.zui.desktoplauncher")
 
     override fun isEnabledCustomCheck(): Boolean {
@@ -35,24 +35,74 @@ class HookEnableMultipleSpace : HookBaseHandleLoadPackage() {
 
     override fun handleLoadPackage(lpparam: XC_LoadPackage.LoadPackageParam) {
         when (lpparam.packageName) {
+            "android" -> {
+                hookUserHandleSupportsMultiSpace(lpparam)
+            }
+
+            "com.android.systemui" -> {
+                hookUserHandleSupportsMultiSpace(lpparam)
+            }
+
             "com.android.settings" -> {
+                hookUserHandleSupportsMultiSpace(lpparam)
+                hookMultiSpaceConstantSupportMultiSpace(lpparam)
+                hookUserSettingsCanSwitchUserNow(lpparam)
                 hookMultipleSpaceManagerSendZuiAddProfileBroadcast(lpparam)
                 hookStorageItemPreferenceShowArrowImageIfNeed(lpparam)
                 hookUtilsGetTargetFragment(lpparam)
-                hookApplicationsManagerFragmentCreateHeader(lpparam)
-                hookSecondaryUserControllerGetSecondaryUserControllers(lpparam)
-                hookSecondaryUserControllerConstructor(lpparam)
+                hookLenovoUtilIsRowVersion(lpparam)
+                hookLenovoUtilIsPrcVersion(lpparam)
             }
 
             "com.zui.launcher", "com.zui.desktoplauncher" -> {
                 hookGraphicsUtilsIsZuiRow(lpparam)
                 hookUtilitiesIsZuiRow(lpparam)
+                hookUtilitiesIsOverlayEnabled(lpparam)
             }
         }
     }
 
+    private fun hookUserHandleSupportsMultiSpace(lpparam: XC_LoadPackage.LoadPackageParam) {
+        val className = "android.os.UserHandle"
+        val methodName = "supportsMultiSpace"
+        val parameterTypes = emptyArray<Any>()
+        val callback = XC_MethodReplacement.returnConstant(true)
+
+        XposedUtil.executeHook(tag, lpparam, className, methodName, *parameterTypes, callback)
+    }
+
+    private fun hookMultiSpaceConstantSupportMultiSpace(lpparam: XC_LoadPackage.LoadPackageParam) {
+        val className = "com.lenovo.common.multispace.MultiSpaceConstant"
+        val methodName = "supportMultiSpace"
+        val parameterTypes = emptyArray<Any>()
+        val callback = object : XC_MethodHook() {
+            override fun afterHookedMethod(param: MethodHookParam) {
+                try {
+                    if (param.result != true) {
+                        val clazz = XposedHelpers.findClass(className, lpparam.classLoader)
+                        XposedHelpers.setStaticIntField(clazz, "mSupportsMultiSpace", 1)
+                        param.result = true
+                    }
+                } catch (e: Throwable) {
+                    XposedUtil.handleHookException(tag, e, className, methodName, *parameterTypes)
+                }
+            }
+        }
+
+        XposedUtil.executeHook(tag, lpparam, className, methodName, *parameterTypes, callback)
+    }
+
+    private fun hookUserSettingsCanSwitchUserNow(lpparam: XC_LoadPackage.LoadPackageParam) {
+        val className = "com.android.settings.users.UserSettings"
+        val methodName = "canSwitchUserNow"
+        val parameterTypes = emptyArray<Any>()
+        val callback = XC_MethodReplacement.returnConstant(false)
+
+        XposedUtil.executeHook(tag, lpparam, className, methodName, *parameterTypes, callback)
+    }
+
     private fun hookMultipleSpaceManagerSendZuiAddProfileBroadcast(lpparam: XC_LoadPackage.LoadPackageParam) {
-        val className = "com.android.settings.feature.multiplespace.manager.MultipleSpaceManager"
+        val className = "com.lenovo.settings.multispace.manager.MultipleSpaceManager"
         val methodName = "sendZuiAddProfileBroadcast"
         val parameterTypes = emptyArray<Any>()
         val callback = object : XC_MethodReplacement() {
@@ -104,19 +154,6 @@ class HookEnableMultipleSpace : HookBaseHandleLoadPackage() {
                     @Suppress("UNCHECKED_CAST")
                     val fragmentMap = XposedHelpers.getStaticObjectField(profileFragmentBridgeClass, "FRAGMENT_MAP") as MutableMap<String, String>
 
-                    val manageApplicationsClassName = XposedHelpers.findClass(
-                        "com.android.settings.applications.manageapplications.ManageApplications",
-                        lpparam.classLoader
-                    ).name
-                    val applicationsManagerFragmentClassName = XposedHelpers.findClass(
-                        "com.android.settings.applications.manageapplications.ApplicationsManagerFragment",
-                        lpparam.classLoader
-                    ).name
-
-                    if (fragmentMap.containsKey(applicationsManagerFragmentClassName)) {
-                        fragmentMap[manageApplicationsClassName] = fragmentMap.remove(applicationsManagerFragmentClassName)!!
-                    }
-
                     val storageDashboardFragmentClassName = XposedHelpers.findClass(
                         "com.android.settings.deviceinfo.StorageDashboardFragment",
                         lpparam.classLoader
@@ -134,52 +171,34 @@ class HookEnableMultipleSpace : HookBaseHandleLoadPackage() {
         XposedUtil.executeHook(tag, lpparam, className, methodName, *parameterTypes, callback)
     }
 
-    private fun hookApplicationsManagerFragmentCreateHeader(lpparam: XC_LoadPackage.LoadPackageParam) {
-        val className = "com.android.settings.applications.manageapplications.ApplicationsManagerFragment"
-        val methodName = "createHeader"
+    private fun hookLenovoUtilIsRowVersion(lpparam: XC_LoadPackage.LoadPackageParam) {
+        val matchCriteria = arrayOf(
+            "com.android.settings.users.UserSettings" to emptyArray<String>(),
+            "com.lenovo.settings.multispace.manager.MultipleSpaceManager" to emptyArray<String>(),
+            "com.lenovo.settings.multispace.AppListFragment" to emptyArray<String>(),
+            "com.lenovo.settings.applications.LenovoAppHeaderPreferenceController" to emptyArray<String>(),
+        )
+
+        val className = "com.lenovo.common.utils.LenovoUtils"
+        val methodName = "isRowVersion"
         val parameterTypes = emptyArray<Any>()
         val callback = object : XC_MethodHook() {
-            override fun afterHookedMethod(param: MethodHookParam) {
+            override fun beforeHookedMethod(param: MethodHookParam) {
                 try {
-                    val clazz = param.thisObject.javaClass
-                    val field = clazz.getDeclaredField("apps_layout1")
-                    field.isAccessible = true
-                    val appsLayout1 = field.get(param.thisObject) as LinearLayout
-                    appsLayout1.visibility = View.VISIBLE
-                } catch (e: Throwable) {
-                    XposedUtil.handleHookException(tag, e, className, methodName, *parameterTypes)
-                }
-            }
-        }
+                    val stackTrace = Thread.currentThread().stackTrace
+                    val calledFromElement = stackTrace.find { element ->
+                        matchCriteria.any { (className, methods) ->
+                            if (methods.isEmpty()) {
+                                element.className.startsWith(className)
+                            } else {
+                                element.className == className && methods.contains(element.methodName)
+                            }
+                        }
+                    }
 
-        XposedUtil.executeHook(tag, lpparam, className, methodName, *parameterTypes, callback)
-    }
-
-    private fun hookSecondaryUserControllerGetSecondaryUserControllers(lpparam: XC_LoadPackage.LoadPackageParam) {
-        val className = "com.android.settings.deviceinfo.storage.SecondaryUserController"
-        val methodName = "getSecondaryUserControllers"
-        val parameterTypes = arrayOf<Any>(
-            Context::class.java,
-            UserManager::class.java,
-            Boolean::class.java,
-            "com.android.settings.deviceinfo.storage.StorageItemPreferenceController"
-        )
-        val callback = object : XC_MethodHook() {
-            override fun afterHookedMethod(param: MethodHookParam) {
-                try {
-                    val returnValue = param.result as ArrayList<*>
-
-                    val noSecondaryUserControllerClass = XposedHelpers.findClass(
-                        "com.android.settings.deviceinfo.storage.SecondaryUserController\$NoSecondaryUserController",
-                        lpparam.classLoader
-                    )
-
-                    if (returnValue.none { noSecondaryUserControllerClass.isInstance(it) }) {
-                        val modifiedList = ArrayList(returnValue)
-                        val context = param.args[0] as Context
-                        val noSecondaryUserController = XposedHelpers.newInstance(noSecondaryUserControllerClass, context)
-                        modifiedList.add(noSecondaryUserController)
-                        param.result = modifiedList
+                    if (calledFromElement != null) {
+                        XposedUtil.xposedDebug(tag, "$methodName method called from class: ${calledFromElement.className}, method: ${calledFromElement.methodName}")
+                        param.result = false
                     }
                 } catch (e: Throwable) {
                     XposedUtil.handleHookException(tag, e, className, methodName, *parameterTypes)
@@ -190,24 +209,35 @@ class HookEnableMultipleSpace : HookBaseHandleLoadPackage() {
         XposedUtil.executeHook(tag, lpparam, className, methodName, *parameterTypes, callback)
     }
 
-    private fun hookSecondaryUserControllerConstructor(lpparam: XC_LoadPackage.LoadPackageParam) {
-        val className = "com.android.settings.deviceinfo.storage.SecondaryUserController"
-        val methodName = "" //Constructor
-        val parameterTypes = arrayOf<Any>(
-            Context::class.java,
-            "android.content.pm.UserInfo",
-            "com.android.settings.deviceinfo.storage.StorageItemPreferenceController"
+    private fun hookLenovoUtilIsPrcVersion(lpparam: XC_LoadPackage.LoadPackageParam) {
+        val matchCriteria = arrayOf(
+            "com.android.settings.users.UserSettings" to emptyArray<String>(),
+            "com.lenovo.settings.multispace.manager.MultipleSpaceManager" to emptyArray<String>(),
+            "com.lenovo.settings.multispace.AppListFragment" to emptyArray<String>(),
+            "com.lenovo.settings.applications.LenovoAppHeaderPreferenceController" to emptyArray<String>(),
         )
+
+        val className = "com.lenovo.common.utils.LenovoUtils"
+        val methodName = "isPrcVersion"
+        val parameterTypes = emptyArray<Any>()
         val callback = object : XC_MethodHook() {
-            override fun afterHookedMethod(param: MethodHookParam) {
+            override fun beforeHookedMethod(param: MethodHookParam) {
                 try {
-                    val isShowMultiSpaceField = XposedHelpers.findField(param.thisObject.javaClass, "isShowMultiSpace")
-                    isShowMultiSpaceField.isAccessible = true
+                    val stackTrace = Thread.currentThread().stackTrace
+                    val calledFromElement = stackTrace.find { element ->
+                        matchCriteria.any { (className, methods) ->
+                            if (methods.isEmpty()) {
+                                element.className.startsWith(className)
+                            } else {
+                                element.className == className && methods.contains(element.methodName)
+                            }
+                        }
+                    }
 
-                    //val currentValue = isShowMultiSpaceField.getBoolean(param.thisObject)
-                    //XposedUtil.xposedDebug(tag, "Current isShowMultiSpace value: $currentValue")
-
-                    isShowMultiSpaceField.setBoolean(param.thisObject, true)
+                    if (calledFromElement != null) {
+                        XposedUtil.xposedDebug(tag, "$methodName method called from class: ${calledFromElement.className}, method: ${calledFromElement.methodName}")
+                        param.result = true
+                    }
                 } catch (e: Throwable) {
                     XposedUtil.handleHookException(tag, e, className, methodName, *parameterTypes)
                 }
@@ -230,6 +260,15 @@ class HookEnableMultipleSpace : HookBaseHandleLoadPackage() {
         val className = "${lpparam.packageName}.Utilities"
         val methodName = "isZuiRow"
         val parameterTypes = emptyArray<Any>()
+        val callback = XC_MethodReplacement.returnConstant(true)
+
+        XposedUtil.executeHook(tag, lpparam, className, methodName, *parameterTypes, callback)
+    }
+
+    private fun hookUtilitiesIsOverlayEnabled(lpparam: XC_LoadPackage.LoadPackageParam) {
+        val className = "${lpparam.packageName}.Utilities"
+        val methodName = "isOverlayEnabled"
+        val parameterTypes = arrayOf<Any>(Context::class.java)
         val callback = XC_MethodReplacement.returnConstant(true)
 
         XposedUtil.executeHook(tag, lpparam, className, methodName, *parameterTypes, callback)

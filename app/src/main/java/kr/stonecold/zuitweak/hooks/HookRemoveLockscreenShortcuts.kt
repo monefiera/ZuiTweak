@@ -2,8 +2,11 @@ package kr.stonecold.zuitweak.hooks
 
 import android.view.View
 import de.robv.android.xposed.XC_MethodHook
+import de.robv.android.xposed.XC_MethodReplacement
 import de.robv.android.xposed.XposedHelpers
 import de.robv.android.xposed.callbacks.XC_LoadPackage
+import kr.stonecold.zuitweak.common.Constants
+import kr.stonecold.zuitweak.common.XposedUtil
 
 @Suppress("unused")
 class HookRemoveLockscreenShortcuts : HookBaseHandleLoadPackage() {
@@ -16,20 +19,36 @@ class HookRemoveLockscreenShortcuts : HookBaseHandleLoadPackage() {
 
     override val hookTargetDevice: Array<String> = emptyArray()
     override val hookTargetRegion: Array<String> = emptyArray()
+    override val hookTargetVersion: Array<String> = emptyArray()
+
     override val hookTargetPackage: Array<String> = arrayOf("com.android.systemui")
     override val hookTargetPackageOptional: Array<String> = emptyArray()
 
     override fun handleLoadPackage(lpparam: XC_LoadPackage.LoadPackageParam) {
         when (lpparam.packageName) {
             "com.android.systemui" -> {
-                executeHooks(
-                    lpparam,
-                    ::hookKeyguardBottomAreaViewUpdateLeftAffordanceIcon,
-                    ::hookKeyguardBottomAreaViewUpdateRightAffordanceIcon,
-                    ::hookKeyguardBottomAreaViewUpdateCameraVisibility,
-                )
+                when (Constants.deviceVersion) {
+                    "16.0" -> {
+                        hookKeyguardQuickAffordanceInteractorIsUsingRepository(lpparam)
+                    }
+
+                    "15.0" -> {
+                        hookKeyguardBottomAreaViewUpdateLeftAffordanceIcon(lpparam)
+                        hookKeyguardBottomAreaViewUpdateRightAffordanceIcon(lpparam)
+                        hookKeyguardBottomAreaViewUpdateCameraVisibility(lpparam)
+                    }
+                }
             }
         }
+    }
+
+    private fun hookKeyguardQuickAffordanceInteractorIsUsingRepository(lpparam: XC_LoadPackage.LoadPackageParam) {
+        val className = "com.android.systemui.keyguard.domain.interactor.KeyguardQuickAffordanceInteractor"
+        val methodName = "isUsingRepository"
+        val parameterTypes = emptyArray<Any>()
+        val callback = XC_MethodReplacement.returnConstant(false)
+
+        XposedUtil.executeHook(tag, lpparam, className, methodName, *parameterTypes, callback)
     }
 
     private fun hookKeyguardBottomAreaViewUpdateLeftAffordanceIcon(lpparam: XC_LoadPackage.LoadPackageParam) {
@@ -37,20 +56,20 @@ class HookRemoveLockscreenShortcuts : HookBaseHandleLoadPackage() {
         val methodName = "updateLeftAffordanceIcon"
         val parameterTypes = emptyArray<Any>()
         val callback = object : XC_MethodHook() {
-                override fun beforeHookedMethod(param: MethodHookParam) {
-                    try {
-                        val mLeftAffordanceView = XposedHelpers.getObjectField(param.thisObject, "mLeftAffordanceView")
-                        if (mLeftAffordanceView != null) {
-                            XposedHelpers.callMethod(mLeftAffordanceView, "setVisibility", View.GONE)
-                            param.result = null
-                        }
-                    } catch (e: Throwable) {
-                        handleHookException(tag, e, className, methodName, *parameterTypes)
+            override fun beforeHookedMethod(param: MethodHookParam) {
+                try {
+                    val mLeftAffordanceView = XposedHelpers.getObjectField(param.thisObject, "mLeftAffordanceView")
+                    if (mLeftAffordanceView != null) {
+                        XposedHelpers.callMethod(mLeftAffordanceView, "setVisibility", View.GONE)
+                        param.result = null
                     }
+                } catch (e: Throwable) {
+                    XposedUtil.handleHookException(tag, e, className, methodName, *parameterTypes)
                 }
             }
+        }
 
-        executeHook(lpparam, className, methodName, *parameterTypes, callback)
+        XposedUtil.executeHook(tag, lpparam, className, methodName, *parameterTypes, callback)
     }
 
     private fun hookKeyguardBottomAreaViewUpdateRightAffordanceIcon(lpparam: XC_LoadPackage.LoadPackageParam) {
@@ -66,12 +85,12 @@ class HookRemoveLockscreenShortcuts : HookBaseHandleLoadPackage() {
                         param.result = null
                     }
                 } catch (e: Throwable) {
-                    handleHookException(tag, e, className, methodName, *parameterTypes)
+                    XposedUtil.handleHookException(tag, e, className, methodName, *parameterTypes)
                 }
             }
         }
 
-        executeHook(lpparam, className, methodName, *parameterTypes, callback)
+        XposedUtil.executeHook(tag, lpparam, className, methodName, *parameterTypes, callback)
     }
 
     private fun hookKeyguardBottomAreaViewUpdateCameraVisibility(lpparam: XC_LoadPackage.LoadPackageParam) {
@@ -87,11 +106,11 @@ class HookRemoveLockscreenShortcuts : HookBaseHandleLoadPackage() {
                         param.result = null
                     }
                 } catch (e: Throwable) {
-                    handleHookException(tag, e, className, methodName, *parameterTypes)
+                    XposedUtil.handleHookException(tag, e, className, methodName, *parameterTypes)
                 }
             }
         }
 
-        executeHook(lpparam, className, methodName, *parameterTypes, callback)
+        XposedUtil.executeHook(tag, lpparam, className, methodName, *parameterTypes, callback)
     }
 }

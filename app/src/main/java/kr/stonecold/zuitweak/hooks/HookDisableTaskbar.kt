@@ -7,11 +7,13 @@ import android.view.WindowManager
 import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.XposedHelpers
 import de.robv.android.xposed.callbacks.XC_LoadPackage
+import kr.stonecold.zuitweak.common.Constants
+import kr.stonecold.zuitweak.common.XposedUtil
 
 @Suppress("unused")
 class HookDisableTaskbar : HookBaseHandleLoadPackage() {
     override val menuItem = HookMenuItem(
-        category = HookMenuCategory.COMMON,
+        category = HookMenuCategory.UNFUCKZUI,
         title = "작업표시줄 표시 비활성화",
         description = "동작탐색 시 작업 표시줄 표시 기능을 제거합니다. (3버튼 탐식시 버튼 사라짐)",
         defaultSelected = false,
@@ -19,6 +21,8 @@ class HookDisableTaskbar : HookBaseHandleLoadPackage() {
 
     override val hookTargetDevice: Array<String> = emptyArray()
     override val hookTargetRegion: Array<String> = emptyArray()
+    override val hookTargetVersion: Array<String> = emptyArray()
+
     override val hookTargetPackage: Array<String> = arrayOf("com.zui.launcher", "com.android.settings", "com.android.systemui")
     override val hookTargetPackageOptional: Array<String> = arrayOf("com.zui.desktoplauncher")
 
@@ -27,26 +31,26 @@ class HookDisableTaskbar : HookBaseHandleLoadPackage() {
     override fun handleLoadPackage(lpparam: XC_LoadPackage.LoadPackageParam) {
         when (lpparam.packageName) {
             "com.zui.launcher", "com.zui.desktoplauncher" -> {
-                executeHooks(
-                    lpparam,
-                    ::hookDeviceProfileBuilderBuild,
-                )
+                hookDeviceProfileBuilderBuild(lpparam)
             }
 
             "com.android.settings" -> {
-                executeHooks(
-                    lpparam,
-                    ::hookSettingsHomepageActivityOnCreate,
-                )
+                hookSettingsHomepageActivityOnCreate(lpparam)
             }
 
             "com.android.systemui" -> {
-                executeHooks(
-                    lpparam,
-                    ::hookUtilitiesIsTablet,
-                    ::hookXSystemUtilIsPad,
-                    ::hookNavigationBarInflaterViewOnLikelyDefaultLayoutChange,
-                )
+                when (Constants.deviceVersion) {
+                    "16.0" -> {
+                        hookUtilitiesIsLargeScreen(lpparam)
+                        hookXSystemUtilIsDevicePad(lpparam)
+                    }
+
+                    "15.0" -> {
+                        hookUtilitiesIsTablet(lpparam)
+                        hookXSystemUtilIsPad(lpparam)
+                    }
+                }
+                hookNavigationBarInflaterViewOnLikelyDefaultLayoutChange(lpparam)
             }
         }
     }
@@ -66,12 +70,12 @@ class HookDisableTaskbar : HookBaseHandleLoadPackage() {
                         XposedHelpers.setBooleanField(profile, "isTaskbarPresent", false)
                     }
                 } catch (e: Throwable) {
-                    handleHookException(tag, e, className, methodName, *parameterTypes)
+                    XposedUtil.handleHookException(tag, e, className, methodName, *parameterTypes)
                 }
             }
         }
 
-        executeHook(lpparam, className, methodName, *parameterTypes, callback)
+        XposedUtil.executeHook(tag, lpparam, className, methodName, *parameterTypes, callback)
     }
 
     private fun hookSettingsHomepageActivityOnCreate(lpparam: XC_LoadPackage.LoadPackageParam) {
@@ -87,12 +91,35 @@ class HookDisableTaskbar : HookBaseHandleLoadPackage() {
                     @Suppress("DEPRECATION")
                     window.addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION)
                 } catch (e: Throwable) {
-                    handleHookException(tag, e, className, methodName, *parameterTypes)
+                    XposedUtil.handleHookException(tag, e, className, methodName, *parameterTypes)
                 }
             }
         }
 
-        executeHook(lpparam, className, methodName, *parameterTypes, callback)
+        XposedUtil.executeHook(tag, lpparam, className, methodName, *parameterTypes, callback)
+    }
+
+    private fun hookUtilitiesIsLargeScreen(lpparam: XC_LoadPackage.LoadPackageParam) {
+        val className = "com.android.systemui.shared.recents.utilities.Utilities"
+        val methodName = "isLargeScreen"
+        val parameterTypes = arrayOf<Any>(Context::class.java)
+        val callback = object : XC_MethodHook() {
+            override fun beforeHookedMethod(param: MethodHookParam) {
+                try {
+                    val stack = Thread.currentThread().stackTrace
+                    for (line in stack) {
+                        if (line.className.contains("NavigationBarController")) {
+                            param.result = false
+                            return
+                        }
+                    }
+                } catch (e: Throwable) {
+                    XposedUtil.handleHookException(tag, e, className, methodName, *parameterTypes)
+                }
+            }
+        }
+
+        XposedUtil.executeHook(tag, lpparam, className, methodName, *parameterTypes, callback)
     }
 
     private fun hookUtilitiesIsTablet(lpparam: XC_LoadPackage.LoadPackageParam) {
@@ -110,12 +137,32 @@ class HookDisableTaskbar : HookBaseHandleLoadPackage() {
                         }
                     }
                 } catch (e: Throwable) {
-                    handleHookException(tag, e, className, methodName, *parameterTypes)
+                    XposedUtil.handleHookException(tag, e, className, methodName, *parameterTypes)
                 }
             }
         }
 
-        executeHook(lpparam, className, methodName, *parameterTypes, callback)
+        XposedUtil.executeHook(tag, lpparam, className, methodName, *parameterTypes, callback)
+    }
+
+    private fun hookXSystemUtilIsDevicePad(lpparam: XC_LoadPackage.LoadPackageParam) {
+        val className = "com.android.systemui.util.XSystemUtil"
+        val methodName = "isDevicePad"
+        val parameterTypes = emptyArray<Any>()
+        val callback = object : XC_MethodHook() {
+            override fun beforeHookedMethod(param: MethodHookParam) {
+                try {
+                    val hookedValue = isPad.get()
+                    if (hookedValue != null) {
+                        param.result = hookedValue == true
+                    }
+                } catch (e: Throwable) {
+                    XposedUtil.handleHookException(tag, e, className, methodName, *parameterTypes)
+                }
+            }
+        }
+
+        XposedUtil.executeHook(tag, lpparam, className, methodName, *parameterTypes, callback)
     }
 
     private fun hookXSystemUtilIsPad(lpparam: XC_LoadPackage.LoadPackageParam) {
@@ -130,12 +177,12 @@ class HookDisableTaskbar : HookBaseHandleLoadPackage() {
                         param.result = hookedValue == true
                     }
                 } catch (e: Throwable) {
-                    handleHookException(tag, e, className, methodName, *parameterTypes)
+                    XposedUtil.handleHookException(tag, e, className, methodName, *parameterTypes)
                 }
             }
         }
 
-        executeHook(lpparam, className, methodName, *parameterTypes, callback)
+        XposedUtil.executeHook(tag, lpparam, className, methodName, *parameterTypes, callback)
     }
 
     private fun hookNavigationBarInflaterViewOnLikelyDefaultLayoutChange(lpparam: XC_LoadPackage.LoadPackageParam) {
@@ -147,7 +194,7 @@ class HookDisableTaskbar : HookBaseHandleLoadPackage() {
                 try {
                     isPad.set(false)
                 } catch (e: Throwable) {
-                    handleHookException(tag, e, className, methodName, *parameterTypes)
+                    XposedUtil.handleHookException(tag, e, className, methodName, *parameterTypes)
                 }
             }
 
@@ -155,11 +202,11 @@ class HookDisableTaskbar : HookBaseHandleLoadPackage() {
                 try {
                     isPad.set(null)
                 } catch (e: Throwable) {
-                    handleHookException(tag, e, className, methodName, *parameterTypes)
+                    XposedUtil.handleHookException(tag, e, className, methodName, *parameterTypes)
                 }
             }
         }
 
-        executeHook(lpparam, className, methodName, *parameterTypes, callback)
+        XposedUtil.executeHook(tag, lpparam, className, methodName, *parameterTypes, callback)
     }
 }
