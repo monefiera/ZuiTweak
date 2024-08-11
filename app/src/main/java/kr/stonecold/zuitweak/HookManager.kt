@@ -11,9 +11,9 @@ object HookManager {
         //COMMON
         registerHook(HookEnableZuiCameraShutterOption())
         registerHook(HookRemoveLockscreenShortcuts())
-        registerHook(HookRemoveUnusedGameServiceIcons())
         registerHook(HookEnableHiddenDisplaySettings())
         registerHook(HookRemoveShutdownMessage())
+        registerHook(HookRemoveUnusedGameServiceIcons())
         //registerHook(HookEnableTurnScreenOn()) ///테스트 필요
 
         //ROW

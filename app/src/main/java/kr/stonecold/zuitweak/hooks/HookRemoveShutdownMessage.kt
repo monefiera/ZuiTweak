@@ -11,7 +11,6 @@ class HookRemoveShutdownMessage : HookBaseHandleInitPackageResources() {
         title = "종료 메시지 제거",
         description = "하단에 보이는 종료 메시지를 제거합니다.",
         defaultSelected = false,
-        isDebug = true,
     )
 
     override val hookTargetDevice: Array<String> = emptyArray()
