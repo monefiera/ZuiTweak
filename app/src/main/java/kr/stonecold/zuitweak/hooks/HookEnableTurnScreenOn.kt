@@ -2,16 +2,18 @@ package kr.stonecold.zuitweak.hooks
 
 import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.callbacks.XC_LoadPackage
-import kr.stonecold.zuitweak.common.XposedUtil
+import kr.stonecold.zuitweak.R
+import kr.stonecold.zuitweak.common.*
 
 @Suppress("unused")
 class HookEnableTurnScreenOn : HookBaseHandleLoadPackage() {
-    override val menuItem = HookMenuItem(
-        category = HookMenuCategory.COMMON,
-        title = "화면 켜기 허용",
-        description = "앱에서 화면을 켜기 허용을 활성화 합니다.",
-        defaultSelected = false,
-    )
+    override val menuItem
+        get() = HookMenuItem(
+            category = HookMenuCategory.COMMON,
+            title = LanguageUtil.getString(R.string.hook_enable_turn_screen_on_title),
+            description = LanguageUtil.getString(R.string.hook_enable_turn_screen_on_desc),
+            defaultSelected = false,
+        )
 
     override val hookTargetDevice: Array<String> = emptyArray()
     override val hookTargetRegion: Array<String> = arrayOf("ROW")

@@ -1,23 +1,23 @@
 package kr.stonecold.zuitweak.hooks
 
-//noinspection SuspiciousImport
-import android.R
 import android.app.Activity
 import android.os.Bundle
 import android.view.Window
 import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.XC_MethodReplacement
 import de.robv.android.xposed.callbacks.XC_LoadPackage
-import kr.stonecold.zuitweak.common.XposedUtil
+import kr.stonecold.zuitweak.R
+import kr.stonecold.zuitweak.common.*
 
 @Suppress("unused")
 class HookChangePermissionController : HookBaseHandleLoadPackage() {
-    override val menuItem = HookMenuItem(
-        category = HookMenuCategory.UNFUCKZUI,
-        title = "Permission Controller 변경",
-        description = "Permission Controller를 AOSP 스타일로 변경합니다.",
-        defaultSelected = false,
-    )
+    override val menuItem
+        get() = HookMenuItem(
+            category = HookMenuCategory.UNFUCKZUI,
+            title = LanguageUtil.getString(R.string.hook_change_permission_controller_title),
+            description = LanguageUtil.getString(R.string.hook_change_permission_controller_desc),
+            defaultSelected = false,
+        )
 
     override val hookTargetDevice: Array<String> = emptyArray()
     override val hookTargetRegion: Array<String> = arrayOf("PRC")
@@ -52,7 +52,7 @@ class HookChangePermissionController : HookBaseHandleLoadPackage() {
             override fun beforeHookedMethod(param: MethodHookParam) {
                 try {
                     val activity = param.thisObject as Activity
-                    activity.setTheme(R.style.Theme_DeviceDefault_Light_Dialog_Alert)
+                    activity.setTheme(android.R.style.Theme_DeviceDefault_Light_Dialog_Alert)
                     activity.requestWindowFeature(Window.FEATURE_NO_TITLE)
                     val rootView = activity.window.decorView
                     rootView.setFilterTouchesWhenObscured(true)

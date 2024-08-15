@@ -3,16 +3,18 @@ package kr.stonecold.zuitweak.hooks
 import de.robv.android.xposed.XC_MethodReplacement
 import de.robv.android.xposed.XposedHelpers
 import de.robv.android.xposed.callbacks.XC_LoadPackage
-import kr.stonecold.zuitweak.common.XposedUtil
+import kr.stonecold.zuitweak.R
+import kr.stonecold.zuitweak.common.*
 
 @Suppress("unused")
 class HookRemovePrcInfo : HookBaseHandleLoadPackage() {
-    override val menuItem = HookMenuItem(
-        category = HookMenuCategory.PRC,
-        title = "PRC 정보 삭제",
-        description = "숨겨져 있는 PRC 관련 정보를 삭제합니다.",
-        defaultSelected = false,
-    )
+    override val menuItem
+        get() = HookMenuItem(
+            category = HookMenuCategory.PRC,
+            title = LanguageUtil.getString(R.string.hook_remove_prc_info_title),
+            description = LanguageUtil.getString(R.string.hook_remove_prc_info_desc),
+            defaultSelected = false,
+        )
 
     override val hookTargetDevice: Array<String> = emptyArray()
     override val hookTargetRegion: Array<String> = arrayOf("PRC")

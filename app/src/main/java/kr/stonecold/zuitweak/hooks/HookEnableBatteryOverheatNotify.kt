@@ -2,17 +2,18 @@ package kr.stonecold.zuitweak.hooks
 
 import de.robv.android.xposed.XC_MethodReplacement
 import de.robv.android.xposed.callbacks.XC_LoadPackage
-import kr.stonecold.zuitweak.common.Constants
-import kr.stonecold.zuitweak.common.XposedUtil
+import kr.stonecold.zuitweak.R
+import kr.stonecold.zuitweak.common.*
 
 @Suppress("unused")
 class HookEnableBatteryOverheatNotify : HookBaseHandleLoadPackage() {
-    override val menuItem = HookMenuItem(
-        category = HookMenuCategory.ROW,
-        title = "배터리 전력 소비 경고 활성화",
-        description = "비정상적인 전력 소비 경고를 활성화합니다.",
-        defaultSelected = false,
-    )
+    override val menuItem
+        get() = HookMenuItem(
+            category = HookMenuCategory.ROW,
+            title = LanguageUtil.getString(R.string.hook_enable_battery_overheat_notify_title),
+            description = LanguageUtil.getString(R.string.hook_enable_battery_overheat_notify_desc),
+            defaultSelected = false,
+        )
 
     override val hookTargetDevice: Array<String> = emptyArray()
     override val hookTargetRegion: Array<String> = arrayOf("ROW")

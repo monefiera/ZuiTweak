@@ -4,18 +4,19 @@ import android.content.Context
 import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.XposedHelpers
 import de.robv.android.xposed.callbacks.XC_LoadPackage
-import kr.stonecold.zuitweak.common.Util
-import kr.stonecold.zuitweak.common.XposedUtil
+import kr.stonecold.zuitweak.R
+import kr.stonecold.zuitweak.common.*
 import java.util.Locale
 
 @Suppress("unused")
 class HookAddKoreanLanguageSettings : HookBaseHandleLoadPackage() {
-    override val menuItem = HookMenuItem(
-        category = HookMenuCategory.PRC,
-        title = "한국어 설정 활성화",
-        description = "언어 설정에 한국어 설정을 추가합니다.",
-        defaultSelected = false,
-    )
+    override val menuItem
+        get() = HookMenuItem(
+            category = HookMenuCategory.PRC,
+            title = LanguageUtil.getString(R.string.hook_add_korean_language_settings_title),
+            description = LanguageUtil.getString(R.string.hook_add_korean_language_settings_desc),
+            defaultSelected = false,
+        )
 
     override val hookTargetDevice: Array<String> = emptyArray()
     override val hookTargetRegion: Array<String> = arrayOf("PRC")

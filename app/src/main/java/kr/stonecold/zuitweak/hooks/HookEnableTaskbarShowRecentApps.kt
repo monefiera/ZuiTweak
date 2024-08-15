@@ -3,17 +3,18 @@ package kr.stonecold.zuitweak.hooks
 import android.content.Context
 import de.robv.android.xposed.XC_MethodReplacement
 import de.robv.android.xposed.callbacks.XC_LoadPackage
-import kr.stonecold.zuitweak.common.Constants
-import kr.stonecold.zuitweak.common.XposedUtil
+import kr.stonecold.zuitweak.R
+import kr.stonecold.zuitweak.common.*
 
 @Suppress("unused")
 class HookEnableTaskbarShowRecentApps : HookBaseHandleLoadPackage() {
-    override val menuItem = HookMenuItem(
-        category = HookMenuCategory.ROW,
-        title = "작업 표시줄 최근 앱 표시 활성화",
-        description = "작업 표시줄 옵션에 최근 앱 표시 ",
-        defaultSelected = false,
-    )
+    override val menuItem
+        get() = HookMenuItem(
+            category = HookMenuCategory.ROW,
+            title = LanguageUtil.getString(R.string.hook_enable_taskbar_show_recent_apps_title),
+            description = LanguageUtil.getString(R.string.hook_enable_taskbar_show_recent_apps_desc),
+            defaultSelected = false,
+        )
 
     override val hookTargetDevice: Array<String> = emptyArray()
     override val hookTargetRegion: Array<String> = arrayOf("ROW")

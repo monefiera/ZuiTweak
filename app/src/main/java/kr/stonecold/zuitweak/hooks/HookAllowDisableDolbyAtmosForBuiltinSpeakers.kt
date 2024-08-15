@@ -3,18 +3,19 @@ package kr.stonecold.zuitweak.hooks
 import de.robv.android.xposed.XC_MethodReplacement
 import de.robv.android.xposed.callbacks.XC_InitPackageResources
 import de.robv.android.xposed.callbacks.XC_LoadPackage
-import kr.stonecold.zuitweak.common.Constants
-import kr.stonecold.zuitweak.common.XposedUtil
+import kr.stonecold.zuitweak.R
+import kr.stonecold.zuitweak.common.*
 import java.util.Locale
 
 @Suppress("unused")
 class HookAllowDisableDolbyAtmosForBuiltinSpeakers : HookBaseHandleLoadPackage() {
-    override val menuItem = HookMenuItem(
-        category = HookMenuCategory.UNFUCKZUI,
-        title = "내장 스피커 Dolby Atmos 비활성화 허용",
-        description = "Dolby Atmos 설정 중 내장 스피커 비활성화를 허용합니다.",
-        defaultSelected = false,
-    )
+    override val menuItem
+        get() = HookMenuItem(
+            category = HookMenuCategory.UNFUCKZUI,
+            title = LanguageUtil.getString(R.string.hook_allow_disable_dolby_atmos_title),
+            description = LanguageUtil.getString(R.string.hook_allow_disable_dolby_atmos_desc),
+            defaultSelected = false,
+        )
 
     override val hookTargetDevice: Array<String> = emptyArray()
     override val hookTargetRegion: Array<String> = emptyArray()
@@ -28,18 +29,20 @@ class HookAllowDisableDolbyAtmosForBuiltinSpeakers : HookBaseHandleLoadPackage()
         if (resparam.packageName == "com.android.settings" || resparam.packageName == "com.android.systemui") {
             val language = Locale.getDefault().language
 
-            val resKey = when (resparam.packageName) {
-                "com.android.settings" -> "dolby_switch_summary"
-                "com.android.systemui" -> "doblyAtmos_title_desc"
-                else -> ""
-            }
-            val dolbySwitchSummary = when (language) {
-                "ko" -> "태블릿 스피커를 사용 중일 때도 Dolby Atmos를 끌 수 있습니다"
-                else -> "When the tablet speaker is in use, Dolby Atmos can be turned off"
-            }
-            resparam.res.setReplacement(resparam.packageName, "string", resKey, dolbySwitchSummary)
+            if (language == "ko") {
+                val resKey = when (resparam.packageName) {
+                    "com.android.settings" -> "dolby_switch_summary"
+                    "com.android.systemui" -> "doblyAtmos_title_desc"
+                    else -> ""
+                }
+                val dolbySwitchSummary = when (language) {
+                    "ko" -> "태블릿 스피커를 사용 중일 때도 Dolby Atmos를 끌 수 있습니다"
+                    else -> "When the tablet speaker is in use, Dolby Atmos can be turned off"
+                }
+                resparam.res.setReplacement(resparam.packageName, "string", resKey, dolbySwitchSummary)
 
-            XposedUtil.xposedDebug(tag, "Successfully replaced ${resparam.packageName}.$resKey: $dolbySwitchSummary")
+                XposedUtil.xposedDebug(tag, "Successfully replaced ${resparam.packageName}.$resKey: $dolbySwitchSummary")
+            }
         }
     }
 

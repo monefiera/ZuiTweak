@@ -1,17 +1,18 @@
 package kr.stonecold.zuitweak
 
 import android.content.Context
+import kr.stonecold.zuitweak.common.*
 import kr.stonecold.zuitweak.hooks.HookMenuCategory
 
 object HookOptions {
     fun getHookOptions(context: Context): List<Pair<String, List<HookOption>>> {
         val categoryOrder = listOf(
-            HookMenuCategory.COMMON to "공통",
-            HookMenuCategory.ROW to "ROW (글로벌롬)",
-            HookMenuCategory.PRC to "PRC (내수롬)",
-            HookMenuCategory.DEVICE to "장비 특화",
-            HookMenuCategory.UNFUCKZUI to "Unfuck ZUI",
-            HookMenuCategory.DEVELOPMENT to "개발 중"
+            HookMenuCategory.COMMON to LanguageUtil.getString(R.string.hook_menu_category_common),
+            HookMenuCategory.ROW to LanguageUtil.getString(R.string.hook_menu_category_row),
+            HookMenuCategory.PRC to LanguageUtil.getString(R.string.hook_menu_category_prc),
+            HookMenuCategory.DEVICE to LanguageUtil.getString(R.string.hook_menu_category_device),
+            HookMenuCategory.UNFUCKZUI to LanguageUtil.getString(R.string.hook_menu_category_unfuckzui),
+            HookMenuCategory.DEVELOPMENT to LanguageUtil.getString(R.string.hook_menu_category_development),
         )
 
         val categoriesWithOptions = mutableMapOf<String, MutableList<HookOption>>()

@@ -1,17 +1,18 @@
 package kr.stonecold.zuitweak.hooks
 
 import de.robv.android.xposed.callbacks.XC_InitPackageResources
-import kr.stonecold.zuitweak.common.Constants
-import kr.stonecold.zuitweak.common.XposedUtil
+import kr.stonecold.zuitweak.R
+import kr.stonecold.zuitweak.common.*
 
 @Suppress("unused")
 class HookRemoveShutdownMessage : HookBaseHandleInitPackageResources() {
-    override val menuItem = HookMenuItem(
-        category = HookMenuCategory.COMMON,
-        title = "종료 메시지 제거",
-        description = "하단에 보이는 종료 메시지를 제거합니다.",
-        defaultSelected = false,
-    )
+    override val menuItem
+        get() = HookMenuItem(
+            category = HookMenuCategory.COMMON,
+            title = LanguageUtil.getString(R.string.hook_remove_shutdown_message_title),
+            description = LanguageUtil.getString(R.string.hook_remove_shutdown_message_desc),
+            defaultSelected = false,
+        )
 
     override val hookTargetDevice: Array<String> = emptyArray()
     override val hookTargetRegion: Array<String> = emptyArray()
@@ -25,7 +26,7 @@ class HookRemoveShutdownMessage : HookBaseHandleInitPackageResources() {
     }
 
     override fun handleInitPackageResources(resparam: XC_InitPackageResources.InitPackageResourcesParam) {
-        when(resparam.packageName) {
+        when (resparam.packageName) {
             "com.android.systemui" -> {
                 hookRemoveMessage(resparam)
             }

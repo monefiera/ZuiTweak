@@ -3,9 +3,7 @@ package kr.stonecold.zuitweak.hooks
 import android.content.Context
 import de.robv.android.xposed.callbacks.XC_InitPackageResources
 import de.robv.android.xposed.callbacks.XC_LoadPackage
-import kr.stonecold.zuitweak.common.Constants
-import kr.stonecold.zuitweak.common.Util
-import kr.stonecold.zuitweak.common.XposedPrefsUtil
+import kr.stonecold.zuitweak.common.*
 
 interface IHookBase {
     val tag: String
@@ -42,8 +40,8 @@ enum class HookMenuCategory {
     DEVELOPMENT,
 }
 
-abstract class HookBase: IHookBase {
-    override val hookTargetDevice: Array<String>  = emptyArray()
+abstract class HookBase : IHookBase {
+    override val hookTargetDevice: Array<String> = emptyArray()
     override val hookTargetRegion: Array<String> = emptyArray()
     override val hookTargetVersion: Array<String> = emptyArray()
 
@@ -186,7 +184,6 @@ abstract class HookBaseHandleLoadPackage : HookBase() {
 
         return Pair(result, message)
     }
-
 }
 
 abstract class HookBaseHandleInitPackageResources : HookBase()

@@ -6,18 +6,18 @@ import android.content.res.XModuleResources
 import de.robv.android.xposed.callbacks.XC_InitPackageResources
 import kr.stonecold.zuitweak.R
 import kr.stonecold.zuitweak.XposedInit
-import kr.stonecold.zuitweak.common.Constants
-import kr.stonecold.zuitweak.common.XposedUtil
+import kr.stonecold.zuitweak.common.*
 
 @Suppress("unused")
 class HookApplyKoreanLanguage : HookBaseHandleInitPackageResources() {
-    override val menuItem = HookMenuItem(
-        category = HookMenuCategory.DEVELOPMENT,
-        title = "한국어 번역 적용",
-        description = "한국어 번역을 적용합니다.",
-        defaultSelected = false,
-        isDebug = true,
-    )
+    override val menuItem
+        get() = HookMenuItem(
+            category = HookMenuCategory.DEVELOPMENT,
+            title = LanguageUtil.getString(R.string.hook_apply_korean_language_title),
+            description = LanguageUtil.getString(R.string.hook_apply_korean_language_desc),
+            defaultSelected = false,
+            isDebug = true,
+        )
 
     override val hookTargetDevice: Array<String> = emptyArray()
     override val hookTargetRegion: Array<String> = arrayOf("PRC")

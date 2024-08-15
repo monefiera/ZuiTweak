@@ -7,17 +7,18 @@ import android.view.WindowManager
 import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.XposedHelpers
 import de.robv.android.xposed.callbacks.XC_LoadPackage
-import kr.stonecold.zuitweak.common.Constants
-import kr.stonecold.zuitweak.common.XposedUtil
+import kr.stonecold.zuitweak.R
+import kr.stonecold.zuitweak.common.*
 
 @Suppress("unused")
 class HookDisableTaskbar : HookBaseHandleLoadPackage() {
-    override val menuItem = HookMenuItem(
-        category = HookMenuCategory.UNFUCKZUI,
-        title = "작업표시줄 표시 비활성화",
-        description = "동작탐색 시 작업 표시줄 표시 기능을 제거합니다. (3버튼 탐식시 버튼 사라짐)",
-        defaultSelected = false,
-    )
+    override val menuItem
+        get() = HookMenuItem(
+            category = HookMenuCategory.UNFUCKZUI,
+            title = LanguageUtil.getString(R.string.hook_disable_taskbar_title),
+            description = LanguageUtil.getString(R.string.hook_disable_taskbar_desc),
+            defaultSelected = false,
+        )
 
     override val hookTargetDevice: Array<String> = emptyArray()
     override val hookTargetRegion: Array<String> = emptyArray()

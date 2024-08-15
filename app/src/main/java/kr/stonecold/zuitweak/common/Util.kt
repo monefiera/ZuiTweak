@@ -11,7 +11,7 @@ import de.robv.android.xposed.XposedHelpers
 
 @Suppress("unused")
 object Util {
-    private val TAG = this.javaClass.simpleName
+    private val tag = this.javaClass.simpleName
 
     fun getModel(): String {
         return Build.MODEL
@@ -22,24 +22,26 @@ object Util {
     }
 
     @SuppressLint("PrivateApi")
-    fun getProperty(vararg keys: String, defaultValue: String = ""): String {
+    fun getProperty(key: String, defaultValue: String = ""): String {
         var ret = defaultValue
+
         try {
             val systemProperties = Class.forName("android.os.SystemProperties")
             val paramTypes = arrayOf<Class<*>>(String::class.java)
             val getMethod = systemProperties.getMethod("get", *paramTypes)
 
-            for (key in keys) {
-                val value = getMethod.invoke(null, key) as? String
-                if (!value.isNullOrBlank()) {
-                    ret = value
-                    break
-                }
+            val value = getMethod.invoke(null, key) as? String
+            if (!value.isNullOrBlank()) {
+                ret = value
             }
         } catch (e: IllegalArgumentException) {
-            Log.d(TAG, "Failed to get system property (IllegalArgumentException): ${e.message}")
+            Log.d(tag, "Failed to get system property (IllegalArgumentException): ${e.message}")
         } catch (e: Exception) {
-            Log.d(TAG, "Failed to get system property (Exception): ${e.message}")
+            Log.d(tag, "Failed to get system property (Exception): ${e.message}")
+        }
+
+        if (ret.isEmpty()) {
+            ret = defaultValue
         }
 
         return ret

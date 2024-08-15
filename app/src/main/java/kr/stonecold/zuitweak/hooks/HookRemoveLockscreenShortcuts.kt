@@ -5,17 +5,18 @@ import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.XC_MethodReplacement
 import de.robv.android.xposed.XposedHelpers
 import de.robv.android.xposed.callbacks.XC_LoadPackage
-import kr.stonecold.zuitweak.common.Constants
-import kr.stonecold.zuitweak.common.XposedUtil
+import kr.stonecold.zuitweak.R
+import kr.stonecold.zuitweak.common.*
 
 @Suppress("unused")
 class HookRemoveLockscreenShortcuts : HookBaseHandleLoadPackage() {
-    override val menuItem = HookMenuItem(
-        category = HookMenuCategory.COMMON,
-        title = "잠금 화면 바로 가기 제거",
-        description = "잠금 화면 하단의 바로 가기를 제거합니다.",
-        defaultSelected = false,
-    )
+    override val menuItem
+        get() = HookMenuItem(
+            category = HookMenuCategory.COMMON,
+            title = LanguageUtil.getString(R.string.hook_remove_lockscreen_shortcuts_title),
+            description = LanguageUtil.getString(R.string.hook_remove_lockscreen_shortcuts_desc),
+            defaultSelected = false,
+        )
 
     override val hookTargetDevice: Array<String> = emptyArray()
     override val hookTargetRegion: Array<String> = emptyArray()

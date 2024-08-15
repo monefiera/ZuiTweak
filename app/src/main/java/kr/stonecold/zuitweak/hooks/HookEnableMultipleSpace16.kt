@@ -8,18 +8,18 @@ import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.XC_MethodReplacement
 import de.robv.android.xposed.XposedHelpers
 import de.robv.android.xposed.callbacks.XC_LoadPackage
-import kr.stonecold.zuitweak.common.Util
-import kr.stonecold.zuitweak.common.XposedUtil
-
+import kr.stonecold.zuitweak.R
+import kr.stonecold.zuitweak.common.*
 
 @Suppress("unused")
 class HookEnableMultipleSpace16 : HookBaseHandleLoadPackage() {
-    override val menuItem = HookMenuItem(
-        category = HookMenuCategory.ROW,
-        title = "Multiple Space 활성화",
-        description = "글로벌롬에서 Multiple Space를 활성화합니다. (ZuiTweak-magisk 필요)",
-        defaultSelected = false,
-    )
+    override val menuItem
+        get() = HookMenuItem(
+            category = HookMenuCategory.ROW,
+            title = LanguageUtil.getString(R.string.hook_enable_multiple_space_title),
+            description = LanguageUtil.getString(R.string.hook_enable_multiple_space_desc),
+            defaultSelected = false,
+        )
 
     override val hookTargetDevice: Array<String> = emptyArray()
     override val hookTargetRegion: Array<String> = arrayOf("ROW")

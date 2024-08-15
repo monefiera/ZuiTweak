@@ -8,6 +8,7 @@ import android.util.Log
 @Suppress("unused")
 object SharedPrefsUtil {
     private lateinit var sharedPreferences: SharedPreferences
+
     var isInitialized: Boolean = false
         private set
 
@@ -23,19 +24,37 @@ object SharedPrefsUtil {
         }
     }
 
-    fun getOptionValue(key: String, defaultValue: Boolean): Boolean {
+    @Suppress("UNCHECKED_CAST")
+    fun <T> getOptionValue(key: String, defaultValue: T): T {
         if (!isInitialized) {
             throw UninitializedPropertyAccessException("SharedPrefsUtil has not been initialized. Call init(context) first.")
         }
-        return sharedPreferences.getBoolean(key, defaultValue)
+        return when(defaultValue) {
+            is Boolean -> sharedPreferences.getBoolean(key, defaultValue) as T
+            is Int ->sharedPreferences.getInt(key, defaultValue) as T
+            is Float -> sharedPreferences.getFloat(key, defaultValue) as T
+            is Long -> sharedPreferences.getLong(key, defaultValue) as T
+            is String -> sharedPreferences.getString(key, defaultValue) as T
+            else -> throw IllegalArgumentException("Unsupported type.")
+        }
     }
 
-    fun setOptionValue(key: String, value: Boolean) {
+    fun <T> setOptionValue(key: String, value: T) {
         if (!isInitialized) {
             throw UninitializedPropertyAccessException("SharedPrefsUtil has not been initialized. Call init(context) first.")
         }
+
         val editor = sharedPreferences.edit()
-        editor.putBoolean(key, value)
+
+        when (value) {
+            is Boolean -> editor.putBoolean(key, value)
+            is Int -> editor.putInt(key, value)
+            is Float -> editor.putFloat(key, value)
+            is Long -> editor.putLong(key, value)
+            is String -> editor.putString(key, value)
+            else -> throw IllegalArgumentException("Unsupported type.")
+        }
+
         editor.apply()
     }
 
@@ -43,6 +62,7 @@ object SharedPrefsUtil {
         if (!isInitialized) {
             throw UninitializedPropertyAccessException("SharedPrefsUtil has not been initialized. Call init(context) first.")
         }
+
         val editor = sharedPreferences.edit()
         editor.remove(key)
         editor.apply()

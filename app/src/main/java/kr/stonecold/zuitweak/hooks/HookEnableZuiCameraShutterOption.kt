@@ -2,16 +2,18 @@ package kr.stonecold.zuitweak.hooks
 
 import de.robv.android.xposed.XC_MethodReplacement
 import de.robv.android.xposed.callbacks.XC_LoadPackage
-import kr.stonecold.zuitweak.common.XposedUtil
+import kr.stonecold.zuitweak.R
+import kr.stonecold.zuitweak.common.*
 
 @Suppress("unused")
 class HookEnableZuiCameraShutterOption : HookBaseHandleLoadPackage() {
-    override val menuItem = HookMenuItem(
-        category = HookMenuCategory.COMMON,
-        title = "카메라 무음 설정 활성화",
-        description = "카메라 앱내 설정에 무음 설정을 활성화 합니다.",
-        defaultSelected = false,
-    )
+    override val menuItem
+        get() = HookMenuItem(
+            category = HookMenuCategory.COMMON,
+            title = LanguageUtil.getString(R.string.hook_enable_zui_camera_shutter_option_title),
+            description = LanguageUtil.getString(R.string.hook_enable_zui_camera_shutter_option_desc),
+            defaultSelected = false,
+        )
 
     override val hookTargetDevice: Array<String> = emptyArray()
     override val hookTargetRegion: Array<String> = emptyArray()

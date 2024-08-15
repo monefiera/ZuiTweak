@@ -1,6 +1,6 @@
 package kr.stonecold.zuitweak
 
-import kr.stonecold.zuitweak.common.Constants
+import kr.stonecold.zuitweak.common.*
 import kr.stonecold.zuitweak.hooks.*
 
 @Suppress("unused")
@@ -8,6 +8,16 @@ object HookManager {
     private val hooks: MutableList<HookBase> = mutableListOf()
 
     init {
+        registerHooks()
+    }
+
+    private fun registerHook(hook: HookBase) {
+        hooks.add(hook)
+    }
+
+    fun registerHooks() {
+        hooks.clear()
+
         //COMMON
         registerHook(HookEnableZuiCameraShutterOption())
         registerHook(HookRemoveLockscreenShortcuts())
@@ -19,8 +29,7 @@ object HookManager {
         //ROW
         if (Constants.deviceVersion == "16.0") {
             registerHook(HookEnableMultipleSpace16())
-        }
-        else {
+        } else {
             registerHook(HookEnableMultipleSpace())
         }
         registerHook(HookEnableHotspot())
@@ -53,14 +62,8 @@ object HookManager {
 
         //DEVELOPMENT
         if (BuildConfig.DEBUG) {
-            registerHook(DebugHandleLoadPackage())
-            registerHook(DebugHandleInitPackageResources())
             registerHook(HookApplyKoreanLanguage())
         }
-    }
-
-    private fun registerHook(hook: HookBase) {
-        hooks.add(hook)
     }
 
     fun getHook(hookClass: Class<out HookBase>): HookBase? {

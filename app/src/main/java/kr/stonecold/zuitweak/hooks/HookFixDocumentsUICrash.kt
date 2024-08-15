@@ -4,16 +4,18 @@ import android.view.MotionEvent
 import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.XposedHelpers
 import de.robv.android.xposed.callbacks.XC_LoadPackage
-import kr.stonecold.zuitweak.common.XposedUtil
+import kr.stonecold.zuitweak.R
+import kr.stonecold.zuitweak.common.*
 
 @Suppress("unused")
 class HookFixDocumentsUICrash : HookBaseHandleLoadPackage() {
-    override val menuItem = HookMenuItem(
-        category = HookMenuCategory.PRC,
-        title = "DocumentsUI 강제 종료 수정",
-        description = "DocumentsUI에서 Mouse Drag시 발생하는 강제 종료 오류를 수정합니다.",
-        defaultSelected = false,
-    )
+    override val menuItem
+        get() = HookMenuItem(
+            category = HookMenuCategory.PRC,
+            title = LanguageUtil.getString(R.string.hook_fix_documents_ui_crash_title),
+            description = LanguageUtil.getString(R.string.hook_fix_documents_ui_crash_desc),
+            defaultSelected = false,
+        )
 
     override val hookTargetDevice: Array<String> = emptyArray()
     override val hookTargetRegion: Array<String> = arrayOf("PRC")

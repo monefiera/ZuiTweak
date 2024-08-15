@@ -1,5 +1,7 @@
 # ZuiTweak
 
+[English Version](README_en.md)
+
 ## 개요
 **ZuiTweak**은 Lenovo Zui 기반 롬에 여러 가지 트윅을 적용하는 Xposed 모듈입니다.
 
@@ -17,7 +19,7 @@
 
 - ** ROW **
   1. **Multiple Space 기능 활성화:** ROW 기반 롬에서 Multiple Space 기능을 활성화합니다.
-     * 주의: [ZuiMultipleSpaceEnabler](https://github.com/forumi0721/ZuiMultipleSpaceEnabler) 설치 필요
+     * 주의: [ZuiTweak-magisk](https://github.com/forumi0721/ZuiTweak-magisk) 설치 필요
   2. **WLAN 핫스팟 기능 활성화:** WLAN 핫스팟 기능을 활성화합니다.
   3. **Smart Split 기능 활성화:** Smart Split 기능을 활성화합니다.
   4. **배터리 전력 소비 경고 활성화:** 배터리 전력 소비 경고 기능을 활성화합니다.

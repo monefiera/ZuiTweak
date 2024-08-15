@@ -3,16 +3,18 @@ package kr.stonecold.zuitweak.hooks
 import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.XC_MethodReplacement
 import de.robv.android.xposed.callbacks.XC_LoadPackage
-import kr.stonecold.zuitweak.common.XposedUtil
+import kr.stonecold.zuitweak.R
+import kr.stonecold.zuitweak.common.*
 
 @Suppress("unused")
 class HookRemoveUnusedGameServiceIcons : HookBaseHandleLoadPackage() {
-    override val menuItem = HookMenuItem(
-        category = HookMenuCategory.COMMON,
-        title = "게임 서비스 미사용 아이콘 제거",
-        description = "게임 서비스에서 보이는 QQ, WeChat, Line, WhatsApp 아이콘을 제거합니다.",
-        defaultSelected = false,
-    )
+    override val menuItem
+        get() = HookMenuItem(
+            category = HookMenuCategory.COMMON,
+            title = LanguageUtil.getString(R.string.hook_remove_unused_game_service_icons_title),
+            description = LanguageUtil.getString(R.string.hook_remove_unused_game_service_icons_desc),
+            defaultSelected = false,
+        )
 
     override val hookTargetDevice: Array<String> = emptyArray()
     override val hookTargetRegion: Array<String> = emptyArray()

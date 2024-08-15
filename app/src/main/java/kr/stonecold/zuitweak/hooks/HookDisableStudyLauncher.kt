@@ -2,16 +2,18 @@ package kr.stonecold.zuitweak.hooks
 
 import de.robv.android.xposed.XC_MethodReplacement
 import de.robv.android.xposed.callbacks.XC_LoadPackage
-import kr.stonecold.zuitweak.common.XposedUtil
+import kr.stonecold.zuitweak.R
+import kr.stonecold.zuitweak.common.*
 
 @Suppress("unused")
 class HookDisableStudyLauncher : HookBaseHandleLoadPackage() {
-    override val menuItem = HookMenuItem(
-        category = HookMenuCategory.PRC,
-        title = "Study launcher 비활성화",
-        description = "Study launcher 기능을 비활성화 합니다.",
-        defaultSelected = false,
-    )
+    override val menuItem
+        get() = HookMenuItem(
+            category = HookMenuCategory.PRC,
+            title = LanguageUtil.getString(R.string.hook_disable_study_launcher_title),
+            description = LanguageUtil.getString(R.string.hook_disable_study_launcher_desc),
+            defaultSelected = false,
+        )
 
     override val hookTargetDevice: Array<String> = emptyArray()
     override val hookTargetRegion: Array<String> = arrayOf("PRC")

@@ -1,5 +1,6 @@
 package kr.stonecold.zuitweak
 
+import android.app.Activity
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
@@ -13,6 +14,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -26,10 +29,12 @@ import kotlinx.coroutines.launch
 import kr.stonecold.zuitweak.ui.theme.ZuiTweakTheme
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.DpOffset
+import androidx.core.content.ContextCompat.getString
 import com.topjohnwu.superuser.Shell
-import kr.stonecold.zuitweak.common.Constants
-import kr.stonecold.zuitweak.common.SharedPrefsUtil
-import kr.stonecold.zuitweak.common.Util
+import kr.stonecold.zuitweak.common.*
+import java.util.Locale
 
 private lateinit var prefsSnapshot: Map<String, *>
 
@@ -39,15 +44,7 @@ class SettingsActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        //// libsu 초기화
-        //Shell.enableVerboseLogging = BuildConfig.DEBUG
-        //Shell.setDefaultBuilder(
-        //    Shell.Builder.create()
-        //        .setFlags(Shell.FLAG_MOUNT_MASTER)
-        //        .setTimeout(10)
-        //)
-        //// Shell.getShell을 호출하여 캐싱된 메인 쉘을 사전 로드합니다.
-        //Shell.getShell { }
+        initializeLanguage(this)
 
         SharedPrefsUtil.init(this)
         if (SharedPrefsUtil.isInitialized) {
@@ -57,10 +54,10 @@ class SettingsActivity : ComponentActivity() {
         setContent {
             ZuiTweakTheme {
                 Surface(
-                        modifier = Modifier.fillMaxSize(),
-                        color = MaterialTheme.colorScheme.background
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background
                 ) {
-                    AppContent()
+                    AppContent(activity = this)
                 }
             }
         }
@@ -73,7 +70,7 @@ class SettingsActivity : ComponentActivity() {
             super.onBackPressed()
             finish()
         } else {
-            Toast.makeText(this, "Press back again to exit", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, getString(R.string.back_press_exit), Toast.LENGTH_SHORT).show()
         }
         backPressedTime = System.currentTimeMillis()
     }
@@ -82,7 +79,7 @@ class SettingsActivity : ComponentActivity() {
 private fun reloadSettings(context: Context) {
     val packagesToReload = mutableListOf<String>()
     if (!SharedPrefsUtil.isInitialized || !::prefsSnapshot.isInitialized) {
-        Toast.makeText(context, "Module is not loaded.", Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, getString(context, R.string.module_not_loaded), Toast.LENGTH_SHORT).show()
         return
     }
 
@@ -95,13 +92,13 @@ private fun reloadSettings(context: Context) {
     }
 
     if (packagesToReload.contains("android")) {
-        Toast.makeText(context, "A reboot is required if any settings related to packages named 'android' have been changed.", Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, getString(context, R.string.reboot_required_android), Toast.LENGTH_SHORT).show()
         return
     }
     prefsSnapshot = SharedPrefsUtil.getAllOptions()
 
     if (packagesToReload.isEmpty()) {
-        Toast.makeText(context, "No changes detected.", Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, getString(context, R.string.no_changes_detected), Toast.LENGTH_SHORT).show()
         return
     }
 
@@ -117,24 +114,24 @@ private fun reloadSettings(context: Context) {
         }
 
     if (commands.isEmpty()) {
-        Toast.makeText(context, "No running processes to kill.", Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, getString(context, R.string.no_running_processes), Toast.LENGTH_SHORT).show()
         return
     }
 
     try {
         val result = Shell.cmd(*commands.toTypedArray()).exec()
         if (!result.isSuccess) {
-            Toast.makeText(context, "Failed to reload settings.", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, getString(context, R.string.failed_reload_settings), Toast.LENGTH_SHORT).show()
         } else {
-            Toast.makeText(context, "Settings reloaded successfully.", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, getString(context, R.string.settings_reloaded), Toast.LENGTH_SHORT).show()
         }
     } catch (e: Exception) {
-        Toast.makeText(context, "Failed to reload settings: ${e.message}", Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, "${getString(context, R.string.failed_reload_settings)}: ${e.message}", Toast.LENGTH_SHORT).show()
     }
 }
 
 @Composable
-fun AppContent(modifier: Modifier = Modifier) {
+fun AppContent(modifier: Modifier = Modifier, activity: Activity? = null) {
     val deviceModel = remember { Constants.deviceModel }
     var isRooted by remember { mutableStateOf(false) }
     var region by remember { mutableStateOf("") }
@@ -142,6 +139,9 @@ fun AppContent(modifier: Modifier = Modifier) {
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
     val categories = HookOptions.getHookOptions(context)
+    var expanded by remember { mutableStateOf(false) }
+    var languageMenuExpanded by remember { mutableStateOf(false) }
+    var selectedLanguage by remember { mutableStateOf(LanguageUtil.getLanguage()) }
 
     LaunchedEffect(Unit) {
         scope.launch {
@@ -151,131 +151,186 @@ fun AppContent(modifier: Modifier = Modifier) {
     }
 
     LazyColumn(
-            modifier = modifier
-                    .fillMaxSize()
-                    .padding(16.dp),
-            verticalArrangement = Arrangement.Top,
-            horizontalAlignment = Alignment.Start
+        modifier = modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        verticalArrangement = Arrangement.Top,
+        horizontalAlignment = Alignment.Start
     ) {
         item {
             Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.fillMaxWidth()
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
             ) {
                 Column {
                     Text(
-                            text = "ZuiTweak",
-                            fontSize = 30.sp,
-                            fontWeight = FontWeight.Bold
+                        text = stringResource(id = R.string.app_title),
+                        fontSize = 30.sp,
+                        fontWeight = FontWeight.Bold
                     )
                     Row {
                         Spacer(modifier = Modifier.width(16.dp))
                         Text(
-                                text = "by StoneCold",
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.Normal
+                            text = stringResource(id = R.string.by_stonecold),
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Normal
                         )
                     }
                 }
                 Spacer(modifier = Modifier.weight(1f))
-                Button(
-                    onClick = {
-                        val intent = Intent(context, SettingsViewActivity::class.java)
-                        context.startActivity(intent)
+
+                Box(modifier = Modifier.align(Alignment.CenterVertically)) {
+
+                    // 메뉴 버튼 추가
+                    IconButton(onClick = { expanded = true }) {
+                        Icon(imageVector = Icons.Default.MoreVert, contentDescription = "Menu")
                     }
-                ) {
-                    Text(text = "SettingsView")
-                }
-                Button(
-                        onClick = {
-                            reloadSettings(context)
-                        },
-                        enabled = isRooted && isModuleEnabled
-                ) {
-                    Text(text = "Reload")
+
+                    // 드롭다운 메뉴
+                    DropdownMenu(
+                        expanded = expanded,
+                        onDismissRequest = { expanded = false },
+                        offset = DpOffset(x = (-8).dp, y = 0.dp)
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text(stringResource(id = R.string.settings_view)) },
+                            onClick = {
+                                expanded = false
+                                val intent = Intent(context, SettingsViewActivity::class.java)
+                                context.startActivity(intent)
+                            })
+
+                        if (isRooted || BuildConfig.DEBUG) {
+                            DropdownMenuItem(
+                                text = { Text(stringResource(id = R.string.reload)) },
+                                enabled = isRooted && isModuleEnabled,
+                                onClick = {
+                                    expanded = false
+                                    reloadSettings(context)
+                                })
+                        }
+
+                        DropdownMenuItem(
+                            text = { Text(stringResource(id = R.string.language)) },
+                            onClick = {
+                                expanded = false
+                                languageMenuExpanded = true
+                            })
+
+                        DropdownMenuItem(
+                            text = { Text(stringResource(id = R.string.exit)) },
+                            onClick = {
+                                activity?.finish()
+                            })
+                    }
+
+                    // 언어 선택을 위한 드롭다운 메뉴
+                    DropdownMenu(
+                        expanded = languageMenuExpanded,
+                        onDismissRequest = { languageMenuExpanded = false },
+                        offset = DpOffset(x = (-8).dp, y = 0.dp)
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text(text = stringResource(id = R.string.korean)) },
+                            onClick = {
+                                selectedLanguage = "ko"
+                                LanguageUtil.setLanguage("ko")
+                                updateLanguage(context, "ko")
+                                languageMenuExpanded = false
+                            })
+
+                        DropdownMenuItem(
+                            text = { Text(text = stringResource(id = R.string.english)) },
+                            onClick = {
+                                selectedLanguage = "en"
+                                LanguageUtil.setLanguage("en")
+                                updateLanguage(context, "en")
+                                languageMenuExpanded = false
+                            })
+                    }
                 }
             }
 
             Text(
-                    text = "Xiaoxin Pad Pro 12.7 (TB371FC), Legion Y700 2023 (TB320FC)의 숨겨진 기능을 활성화 하거나 오류를 수정합니다.",
-                    fontSize = 18.sp,
-                    modifier = Modifier.padding(start = 8.dp, top = 8.dp, bottom = 16.dp)
+                text = stringResource(id = R.string.device_info_description),
+                fontSize = 18.sp,
+                modifier = Modifier.padding(start = 8.dp, top = 8.dp, bottom = 16.dp)
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                    text = "정보",
-                    fontSize = 26.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White,
-                    modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(4.dp))
-                            .background(MaterialTheme.colorScheme.primary)
-                            .padding(8.dp)
+                text = stringResource(id = R.string.information),
+                fontSize = 26.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.White,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(4.dp))
+                    .background(MaterialTheme.colorScheme.primary)
+                    .padding(8.dp)
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                    text = "Device Model: $deviceModel",
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Medium,
-                    modifier = Modifier.padding(bottom = 16.dp)
+                text = "${stringResource(id = R.string.device_model)} $deviceModel",
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Medium,
+                modifier = Modifier.padding(bottom = 16.dp)
             )
             if (deviceModel != "TB371FC" && deviceModel != "TB320FC") {
                 Row {
                     Spacer(modifier = Modifier.width(16.dp))
                     Text(
-                            text = "미지원 단말기",
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.Red,
-                            modifier = Modifier.padding(bottom = 16.dp)
+                        text = stringResource(id = R.string.unsupported_device),
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.Red,
+                        modifier = Modifier.padding(bottom = 16.dp)
                     )
                 }
             }
             Row(
-                    modifier = Modifier.padding(bottom = 16.dp)
+                modifier = Modifier.padding(bottom = 16.dp)
             ) {
                 Text(
-                        text = "Region: ",
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = MaterialTheme.colorScheme.onSurface
+                    text = stringResource(id = R.string.region),
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
-                        text = region,
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = if (region == "UNKNOWN") Color.Red else MaterialTheme.colorScheme.onSurface
+                    text = region,
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = if (region == "UNKNOWN") Color.Red else MaterialTheme.colorScheme.onSurface
                 )
             }
             Row(
-                    modifier = Modifier.padding(bottom = 16.dp)
+                modifier = Modifier.padding(bottom = 16.dp)
             ) {
                 Text(
-                        text = "Rooting Status: ",
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Medium
+                    text = stringResource(id = R.string.rooting_status),
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Medium
                 )
                 Text(
-                        text = if (isRooted) "Rooted" else "Not Rooted",
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = if (isRooted) MaterialTheme.colorScheme.onSurface else Color.Red
+                    text = if (isRooted) stringResource(id = R.string.rooted) else stringResource(id = R.string.not_rooted),
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = if (isRooted) MaterialTheme.colorScheme.onSurface else Color.Red
                 )
             }
             Row(
-                    modifier = Modifier.padding(bottom = 16.dp)
+                modifier = Modifier.padding(bottom = 16.dp)
             ) {
                 Text(
-                        text = "Module Status: ",
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Medium
+                    text = stringResource(id = R.string.module_status),
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Medium
                 )
                 Text(
-                        text = if (isModuleEnabled) "Enabled" else "Disabled",
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = if (isModuleEnabled) MaterialTheme.colorScheme.onSurface else Color.Red
+                    text = if (isModuleEnabled) stringResource(id = R.string.enabled) else stringResource(id = R.string.disabled),
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = if (isModuleEnabled) MaterialTheme.colorScheme.onSurface else Color.Red
                 )
             }
         }
@@ -299,40 +354,42 @@ fun ConfigSection(context: Context) {
 
     Column(modifier = Modifier.padding(vertical = 8.dp)) {
         Text(
-                text = "설정",
-                fontSize = 26.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color.White,
-                modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(4.dp))
-                        .background(MaterialTheme.colorScheme.primary)
-                        .padding(8.dp)
+            text = stringResource(id = R.string.settings),
+            fontSize = 26.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color.White,
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(4.dp))
+                .background(MaterialTheme.colorScheme.primary)
+                .padding(8.dp)
         )
         Spacer(modifier = Modifier.height(8.dp))
         Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 8.dp)
         ) {
             Text(
-                    text = "런처에서 아이콘 숨기기",
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold
+                text = stringResource(id = R.string.hide_launcher_icon),
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold
             )
             Spacer(modifier = Modifier.weight(1f))
             Switch(
-                    checked = isIconHidden,
-                    onCheckedChange = {
-                        isIconHidden = it
-                        setLauncherIconHidden(context, it)
-                        Toast.makeText(context, "설정 변경됨. 변경사항을 적용하려면 재부팅하십시오.", Toast.LENGTH_LONG).show()
-                    }
+                checked = isIconHidden,
+                onCheckedChange = {
+                    isIconHidden = it
+                    setLauncherIconHidden(context, it)
+                    Toast.makeText(context, getString(context, R.string.settings_changed), Toast.LENGTH_LONG).show()
+                }
             )
         }
         Text(
-                text = "이 옵션을 활성화하면, 앱 아이콘이 런처에서 숨겨집니다. 아이콘을 다시 표시하려면, 이 옵션을 비활성화하십시오.",
-                fontSize = 16.sp,
-                modifier = Modifier.padding(start = 8.dp)
+            text = stringResource(id = R.string.hide_icon_description),
+            fontSize = 16.sp,
+            modifier = Modifier.padding(start = 8.dp)
         )
     }
 }
@@ -341,23 +398,69 @@ fun ConfigSection(context: Context) {
 fun NoticeSection() {
     Column(modifier = Modifier.padding(vertical = 8.dp)) {
         Text(
-                text = "Notice",
-                fontSize = 26.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color.White,
-                modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(4.dp))
-                        .background(MaterialTheme.colorScheme.primary)
-                        .padding(8.dp)
+            text = stringResource(id = R.string.notice),
+            fontSize = 26.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color.White,
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(4.dp))
+                .background(MaterialTheme.colorScheme.primary)
+                .padding(8.dp)
         )
         Spacer(modifier = Modifier.height(8.dp))
         Text(
-                text = "• 일부 설정은 UnfuckZUI에서 가져왔습니다.",
-                fontSize = 16.sp,
-                modifier = Modifier.padding(start = 8.dp)
+            text = stringResource(id = R.string.feature_not_guaranteed),
+            fontSize = 20.sp,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(start = 8.dp)
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = stringResource(id = R.string.imported_settings),
+            fontSize = 20.sp,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(start = 8.dp)
         )
     }
+}
+
+fun initializeLanguage(context: Context) {
+    val savedLanguage = LanguageUtil.getLanguage()
+    var language = savedLanguage
+    val defaultLocale = Locale.getDefault().language
+
+    if(language.isNullOrEmpty()) {
+        language = if (defaultLocale == "ko") "ko" else "en"
+    }
+
+    if (defaultLocale != language) {
+        val locale = Locale(language)
+        Locale.setDefault(locale)
+        val config = context.resources.configuration
+        config.setLocale(locale)
+        context.createConfigurationContext(config)
+        ZuiTweakApplication.appContext.createConfigurationContext(config)
+
+        @Suppress("DEPRECATION")
+        context.resources.updateConfiguration(config, context.resources.displayMetrics)
+        @Suppress("DEPRECATION")
+        ZuiTweakApplication.appContext.resources.updateConfiguration(config, context.resources.displayMetrics)
+
+        HookManager.registerHooks()
+    }
+}
+
+fun updateLanguage(context: Context, language: String) {
+    val locale = Locale(language)
+    Locale.setDefault(locale)
+    val config = context.resources.configuration
+    config.setLocale(locale)
+    context.createConfigurationContext(config)
+
+    val refreshIntent = Intent(context, SettingsActivity::class.java)
+    refreshIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+    context.startActivity(refreshIntent)
 }
 
 fun isLauncherIconHidden(context: Context): Boolean {
@@ -371,9 +474,9 @@ fun setLauncherIconHidden(context: Context, hidden: Boolean) {
     val componentName = ComponentName(context, MainActivity::class.java)
     val pm = context.packageManager
     pm.setComponentEnabledSetting(
-            componentName,
-            if (hidden) PackageManager.COMPONENT_ENABLED_STATE_DISABLED else PackageManager.COMPONENT_ENABLED_STATE_DEFAULT,
-            PackageManager.DONT_KILL_APP
+        componentName,
+        if (hidden) PackageManager.COMPONENT_ENABLED_STATE_DISABLED else PackageManager.COMPONENT_ENABLED_STATE_DEFAULT,
+        PackageManager.DONT_KILL_APP
     )
 }
 
@@ -381,15 +484,15 @@ fun setLauncherIconHidden(context: Context, hidden: Boolean) {
 fun CategorySection(category: String, options: List<HookOption>, context: Context) {
     Column(modifier = Modifier.padding(vertical = 8.dp)) {
         Text(
-                text = category,
-                fontSize = 26.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color.White,
-                modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(4.dp))
-                        .background(MaterialTheme.colorScheme.primary)
-                        .padding(8.dp)
+            text = category,
+            fontSize = 26.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color.White,
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(4.dp))
+                .background(MaterialTheme.colorScheme.primary)
+                .padding(8.dp)
         )
         Spacer(modifier = Modifier.height(8.dp))
         options.forEach { option ->
@@ -407,36 +510,36 @@ fun OptionItem(context: Context, option: HookOption, modifier: Modifier = Modifi
     val isEnabled by remember { mutableStateOf(SharedPrefsUtil.isInitialized && option.isEnabledOption) }
 
     Column(
-            modifier = modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 8.dp)
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp)
     ) {
         Row(
-                verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                    text = option.title,
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold
+                text = option.title,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold
             )
             Spacer(modifier = Modifier.weight(1f))
             Switch(
-                    checked = isChecked,
-                    onCheckedChange = {
-                        isChecked = it
-                        if (SharedPrefsUtil.isInitialized) {
-                            SharedPrefsUtil.setOptionValue(option.key, isChecked)
-                        } else {
-                            Toast.makeText(context, "Settings changed. Please reboot for changes to take effect.", Toast.LENGTH_LONG).show()
-                        }
-                    },
-                    enabled = isEnabled
+                checked = isChecked,
+                onCheckedChange = {
+                    isChecked = it
+                    if (SharedPrefsUtil.isInitialized) {
+                        SharedPrefsUtil.setOptionValue(option.key, isChecked)
+                    } else {
+                        Toast.makeText(context, getString(context, R.string.settings_changed), Toast.LENGTH_LONG).show()
+                    }
+                },
+                enabled = isEnabled
             )
         }
         Text(
-                text = option.description,
-                fontSize = 16.sp,
-                modifier = Modifier.padding(start = 8.dp)
+            text = option.description,
+            fontSize = 16.sp,
+            modifier = Modifier.padding(start = 8.dp)
         )
     }
 }

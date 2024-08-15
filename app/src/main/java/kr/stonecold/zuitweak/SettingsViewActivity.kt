@@ -16,7 +16,7 @@ import androidx.core.app.ActivityCompat
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kr.stonecold.zuitweak.common.SharedPrefsUtil
+import kr.stonecold.zuitweak.common.*
 import kr.stonecold.zuitweak.ui.theme.ZuiTweakTheme
 
 class SettingsViewActivity : ComponentActivity() {

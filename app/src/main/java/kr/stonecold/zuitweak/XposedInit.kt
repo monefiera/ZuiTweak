@@ -5,9 +5,7 @@ import de.robv.android.xposed.IXposedHookLoadPackage
 import de.robv.android.xposed.IXposedHookZygoteInit
 import de.robv.android.xposed.callbacks.XC_InitPackageResources
 import de.robv.android.xposed.callbacks.XC_LoadPackage
-import kr.stonecold.zuitweak.common.Constants
-import kr.stonecold.zuitweak.common.XposedPrefsUtil
-import kr.stonecold.zuitweak.common.XposedUtil
+import kr.stonecold.zuitweak.common.*
 import kr.stonecold.zuitweak.hooks.*
 
 @Suppress("unused")
@@ -56,6 +54,8 @@ class XposedInit : IXposedHookZygoteInit, IXposedHookLoadPackage, IXposedHookIni
             return
         }
 
+        XposedPrefsUtil.reload()
+
         handleLoadPackageCustom(lpparam)
 
         if (handleLoadPackagePackages.isEmpty() || !handleLoadPackagePackages.contains(lpparam.packageName)) {
@@ -73,8 +73,6 @@ class XposedInit : IXposedHookZygoteInit, IXposedHookLoadPackage, IXposedHookIni
         }
 
         XposedUtil.xposedInfo(tag, "HandleLoadPackage Loaded App: ${lpparam.packageName}")
-
-        XposedPrefsUtil.reload()
 
         filterHooks.forEach { hook ->
             val localTag = "${hook.javaClass.simpleName}[${lpparam.packageName}]"
@@ -108,6 +106,8 @@ class XposedInit : IXposedHookZygoteInit, IXposedHookLoadPackage, IXposedHookIni
             return
         }
 
+        XposedPrefsUtil.reload()
+
         handleInitPackageResourcesCustom(resparam)
 
         if (handleInitPackageResourcesPackages.isEmpty() || !handleInitPackageResourcesPackages.contains(resparam.packageName)) {
@@ -123,8 +123,6 @@ class XposedInit : IXposedHookZygoteInit, IXposedHookLoadPackage, IXposedHookIni
         if (filterHooks.isEmpty()) {
             return
         }
-
-        XposedPrefsUtil.reload()
 
         XposedUtil.xposedInfo(tag, "HandleInitPackageResources Loaded App: ${resparam.packageName}")
 
@@ -157,8 +155,6 @@ class XposedInit : IXposedHookZygoteInit, IXposedHookLoadPackage, IXposedHookIni
         if (filterHooks.isEmpty()) {
             return
         }
-
-        XposedPrefsUtil.reload()
 
         XposedUtil.xposedInfo(tag, "HandleInitPackageResources Loaded App: ${resparam.packageName}")
 

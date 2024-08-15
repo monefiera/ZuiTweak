@@ -3,16 +3,18 @@ package kr.stonecold.zuitweak.hooks
 import android.content.Context
 import de.robv.android.xposed.XC_MethodReplacement
 import de.robv.android.xposed.callbacks.XC_LoadPackage
-import kr.stonecold.zuitweak.common.XposedUtil
+import kr.stonecold.zuitweak.R
+import kr.stonecold.zuitweak.common.*
 
 @Suppress("unused")
 class HookDisableAppSwitchForceStop : HookBaseHandleLoadPackage() {
-    override val menuItem = HookMenuItem(
-        category = HookMenuCategory.UNFUCKZUI,
-        title = "앱 강제 종료 기능 비활성화",
-        description = "App Switcher에서 App 제거시 강제 종료를 비활성화합니다.",
-        defaultSelected = false,
-    )
+    override val menuItem
+        get() = HookMenuItem(
+            category = HookMenuCategory.UNFUCKZUI,
+            title = LanguageUtil.getString(R.string.hook_disable_app_switch_force_stop_title),
+            description = LanguageUtil.getString(R.string.hook_disable_app_switch_force_stop_desc),
+            defaultSelected = false,
+        )
 
     override val hookTargetDevice: Array<String> = emptyArray()
     override val hookTargetRegion: Array<String> = emptyArray()

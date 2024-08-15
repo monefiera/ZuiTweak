@@ -2,17 +2,18 @@ package kr.stonecold.zuitweak.hooks
 
 import de.robv.android.xposed.XC_MethodReplacement
 import de.robv.android.xposed.callbacks.XC_LoadPackage
-import kr.stonecold.zuitweak.common.Util
-import kr.stonecold.zuitweak.common.XposedUtil
+import kr.stonecold.zuitweak.R
+import kr.stonecold.zuitweak.common.*
 
 @Suppress("unused")
 class HookFixBatteryIconTestMode : HookBaseHandleLoadPackage() {
-    override val menuItem = HookMenuItem(
-        category = HookMenuCategory.PRC,
-        title = "배터리 아이콘 사라짐 수정",
-        description = "test_mode 활성화 시 배터리 아이콘이 사라지는 문제를 해결합니다.",
-        defaultSelected = false,
-    )
+    override val menuItem
+        get() = HookMenuItem(
+            category = HookMenuCategory.PRC,
+            title = LanguageUtil.getString(R.string.hook_fix_battery_icon_test_mode_title),
+            description = LanguageUtil.getString(R.string.hook_fix_battery_icon_test_mode_desc),
+            defaultSelected = false,
+        )
 
     override val hookTargetDevice: Array<String> = emptyArray()
     override val hookTargetRegion: Array<String> = arrayOf("PRC")

@@ -8,16 +8,18 @@ import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.XC_MethodReplacement
 import de.robv.android.xposed.XposedHelpers
 import de.robv.android.xposed.callbacks.XC_LoadPackage
-import kr.stonecold.zuitweak.common.XposedUtil
+import kr.stonecold.zuitweak.R
+import kr.stonecold.zuitweak.common.*
 
 @Suppress("unused")
 class HookChangeKeyboardHotkeys : HookBaseHandleLoadPackage() {
-    override val menuItem = HookMenuItem(
-        category = HookMenuCategory.DEVICE,
-        title = "키보드 단축키 변경",
-        description = "fn+E(DocumentsUI), fn+S(Assistant), fn+P(PC Mode) 단축키 기능을 변경합니다.",
-        defaultSelected = false,
-    )
+    override val menuItem
+        get() = HookMenuItem(
+            category = HookMenuCategory.DEVICE,
+            title = LanguageUtil.getString(R.string.hook_change_keyboard_hotkeys_title),
+            description = LanguageUtil.getString(R.string.hook_change_keyboard_hotkeys_desc),
+            defaultSelected = false,
+        )
 
     override val hookTargetDevice: Array<String> = arrayOf("TB371FC")
     override val hookTargetRegion: Array<String> = emptyArray()

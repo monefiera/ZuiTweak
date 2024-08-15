@@ -6,6 +6,7 @@ import kr.stonecold.zuitweak.BuildConfig
 object Constants {
     const val APPLICATION_ID = BuildConfig.APPLICATION_ID
     const val PREFS_NAME = "feature_config"
+    const val LANGAUGE_PREFS_NAME = "langauge_config"
 
     val deviceModel: String by lazy {
         return@lazy Util.getModel()

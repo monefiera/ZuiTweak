@@ -1,7 +1,5 @@
 package kr.stonecold.zuitweak.hooks
 
-//noinspection SuspiciousImport
-import android.R
 import android.animation.ArgbEvaluator
 import android.app.AndroidAppHelper
 import android.app.Application
@@ -25,17 +23,18 @@ import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.XC_MethodReplacement
 import de.robv.android.xposed.XposedHelpers
 import de.robv.android.xposed.callbacks.XC_LoadPackage
-import kr.stonecold.zuitweak.common.Constants
-import kr.stonecold.zuitweak.common.XposedUtil
+import kr.stonecold.zuitweak.R
+import kr.stonecold.zuitweak.common.*
 
 @Suppress("unused")
 class HookChangeNotificationIcon : HookBaseHandleLoadPackage() {
-    override val menuItem = HookMenuItem(
-        category = HookMenuCategory.UNFUCKZUI,
-        title = "알림 아이콘 변경",
-        description = "알림 아이콘을 CDD 준수 아이콘(테마적용)으로 변경합니다.",
-        defaultSelected = false,
-    )
+    override val menuItem
+        get() = HookMenuItem(
+            category = HookMenuCategory.UNFUCKZUI,
+            title = LanguageUtil.getString(R.string.hook_change_notification_icon_title),
+            description = LanguageUtil.getString(R.string.hook_change_notification_icon_desc),
+            defaultSelected = false,
+        )
 
     override val hookTargetDevice: Array<String> = emptyArray()
     override val hookTargetRegion: Array<String> = emptyArray()
@@ -242,6 +241,7 @@ class HookChangeNotificationIcon : HookBaseHandleLoadPackage() {
                     val entry = XposedHelpers.callMethod(row, "getEntry")
                     val sbn = XposedHelpers.callMethod(entry, "getSbn") as StatusBarNotification
                     val mIcon = XposedHelpers.getObjectField(param.thisObject, "mIcon") as ImageView
+
                     @Suppress("LocalVariableName")
                     val KEY_BACKGROUND_UNFUCKED = 1145141919
                     val scale = 24.0f / 34.0f
@@ -325,8 +325,8 @@ class HookChangeNotificationIcon : HookBaseHandleLoadPackage() {
             override fun afterHookedMethod(param: MethodHookParam) {
                 try {
                     val context = XposedHelpers.getObjectField(param.thisObject, "mContext") as Context
-                    val themedContext: Context = ContextThemeWrapper(context, R.style.Theme_DeviceDefault_DayNight)
-                    themedContext.obtainStyledAttributes(intArrayOf(R.attr.textColorPrimary)).use { attrs ->
+                    val themedContext: Context = ContextThemeWrapper(context, android.R.style.Theme_DeviceDefault_DayNight)
+                    themedContext.obtainStyledAttributes(intArrayOf(android.R.attr.textColorPrimary)).use { attrs ->
                         val color = attrs.getColorStateList(0)!!.defaultColor
                         XposedHelpers.setIntField(param.thisObject, "mThemedTextColorPrimary", color)
                     }
@@ -347,8 +347,8 @@ class HookChangeNotificationIcon : HookBaseHandleLoadPackage() {
             override fun afterHookedMethod(param: MethodHookParam) {
                 try {
                     val context = XposedHelpers.getObjectField(param.thisObject, "mContext") as Context
-                    val themedContext: Context = ContextThemeWrapper(context, R.style.Theme_DeviceDefault_DayNight)
-                    themedContext.obtainStyledAttributes(intArrayOf(R.attr.textColorPrimary)).use { attrs ->
+                    val themedContext: Context = ContextThemeWrapper(context, android.R.style.Theme_DeviceDefault_DayNight)
+                    themedContext.obtainStyledAttributes(intArrayOf(android.R.attr.textColorPrimary)).use { attrs ->
                         val color = attrs.getColorStateList(0)!!.defaultColor
                         XposedHelpers.setIntField(param.thisObject, "mThemedTextColorPrimary", color)
                     }
@@ -437,6 +437,6 @@ class HookChangeNotificationIcon : HookBaseHandleLoadPackage() {
 
     @RequiresApi(Build.VERSION_CODES.S)
     private fun getSystemAccentColor(): Int {
-        return getSystemUiContext()!!.getColor(R.color.system_accent1_500)
+        return getSystemUiContext()!!.getColor(android.R.color.system_accent1_500)
     }
 }

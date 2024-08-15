@@ -3,17 +3,18 @@ package kr.stonecold.zuitweak.hooks
 import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.XposedHelpers
 import de.robv.android.xposed.callbacks.XC_LoadPackage
-import kr.stonecold.zuitweak.common.Util
-import kr.stonecold.zuitweak.common.XposedUtil
+import kr.stonecold.zuitweak.R
+import kr.stonecold.zuitweak.common.*
 
 @Suppress("unused")
 class HookEnablePenService: HookBaseHandleLoadPackage() {
-    override val menuItem = HookMenuItem(
-        category = HookMenuCategory.DEVICE,
-        title = "Pen 서비스 활성화",
-        description = "Pairing 없이 Pen Service를 활성화하여 호환 펜 사용이 가능하도록 합니다.",
-        defaultSelected = false,
-    )
+    override val menuItem
+        get() = HookMenuItem(
+            category = HookMenuCategory.DEVICE,
+            title = LanguageUtil.getString(R.string.hook_enable_pen_service_title),
+            description = LanguageUtil.getString(R.string.hook_enable_pen_service_desc),
+            defaultSelected = false,
+        )
 
     override val hookTargetDevice: Array<String> = arrayOf("TB371FC")
     override val hookTargetRegion: Array<String> = emptyArray()

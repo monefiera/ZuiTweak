@@ -2,18 +2,18 @@ package kr.stonecold.zuitweak.hooks
 
 import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.callbacks.XC_LoadPackage
-import kr.stonecold.zuitweak.common.Constants
-import kr.stonecold.zuitweak.common.XposedUtil
-
+import kr.stonecold.zuitweak.R
+import kr.stonecold.zuitweak.common.*
 
 @Suppress("unused")
 class HookEnableOneVisionSmartSplit : HookBaseHandleLoadPackage() {
-    override val menuItem = HookMenuItem(
-        category = HookMenuCategory.ROW,
-        title = "Smart Split 활성화",
-        description = "One Vision의 Smart Split 기능을 활성화 합니다. (Smart Rotation 대체)",
-        defaultSelected = false,
-    )
+    override val menuItem
+        get() = HookMenuItem(
+            category = HookMenuCategory.ROW,
+            title = LanguageUtil.getString(R.string.hook_enable_one_vision_smart_split_title),
+            description = LanguageUtil.getString(R.string.hook_enable_one_vision_smart_split_desc),
+            defaultSelected = false,
+        )
 
     override val hookTargetDevice: Array<String> = emptyArray()
     override val hookTargetRegion: Array<String> = arrayOf("ROW")

@@ -4,18 +4,19 @@ import android.content.Context
 import de.robv.android.xposed.XC_MethodReplacement
 import de.robv.android.xposed.callbacks.XC_InitPackageResources
 import de.robv.android.xposed.callbacks.XC_LoadPackage
-import kr.stonecold.zuitweak.common.Constants
-import kr.stonecold.zuitweak.common.XposedUtil
+import kr.stonecold.zuitweak.R
+import kr.stonecold.zuitweak.common.*
 import java.util.Locale
 
 @Suppress("unused")
 class HookEnableHotspot : HookBaseHandleLoadPackage() {
-    override val menuItem = HookMenuItem(
-        category = HookMenuCategory.ROW,
-        title = "핫스팟 활성화",
-        description = "핫스팟 기능을 활성화 합니다.",
-        defaultSelected = false,
-    )
+    override val menuItem
+        get() = HookMenuItem(
+            category = HookMenuCategory.ROW,
+            title = LanguageUtil.getString(R.string.hook_enable_hotspot_title),
+            description = LanguageUtil.getString(R.string.hook_enable_hotspot_desc),
+            defaultSelected = false,
+        )
 
     override val hookTargetDevice: Array<String> = emptyArray()
     override val hookTargetRegion: Array<String> = arrayOf("ROW")
@@ -29,15 +30,16 @@ class HookEnableHotspot : HookBaseHandleLoadPackage() {
         if (resparam.packageName == "com.android.settings") {
             val language = Locale.getDefault().language
 
-            val resKey = "cel_wifi_hotspot_checkbox_text"
-            val hotspotCheckboxText = if (language == "ko") {
-                "핫스팟"
-            } else {
-                "Hotspot"
-            }
-            resparam.res.setReplacement(resparam.packageName, "string", resKey, hotspotCheckboxText)
+            if (language == "ko") {
+                val resKey = "cel_wifi_hotspot_checkbox_text"
+                val hotspotCheckboxText = when (language) {
+                    "ko" -> "핫스팟"
+                    else -> "Hotspot"
+                }
+                resparam.res.setReplacement(resparam.packageName, "string", resKey, hotspotCheckboxText)
 
-            XposedUtil.xposedDebug(tag, "Successfully replaced ${resparam.packageName}.$resKey: $hotspotCheckboxText")
+                XposedUtil.xposedDebug(tag, "Successfully replaced ${resparam.packageName}.$resKey: $hotspotCheckboxText")
+            }
         }
     }
 
