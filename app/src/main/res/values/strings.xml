@@ -72,6 +72,8 @@
     <string name="hook_enable_hidden_display_settings_desc">Enables hidden display settings options.</string>
     <string name="hook_enable_hotspot_title">Enable Hotspot</string>
     <string name="hook_enable_hotspot_desc">Enables the hotspot feature.</string>
+    <string name="hook_enable_wifidirect_title">Enable Wifi Direct</string>
+    <string name="hook_enable_wifidirect_desc">Enable the Wifi Direct feature.</string>
     <string name="hook_enable_multiple_space_title">Enable Multiple Space</string>
     <string name="hook_enable_multiple_space_desc">Enables Multiple Space on Global ROM. (Requires ZuiTweak-magisk)</string>
     <string name="hook_enable_one_vision_smart_rotation_title">Enable Smart Rotation</string>
@@ -92,6 +94,8 @@
     <string name="hook_fix_battery_icon_test_mode_desc">Fixes the issue where the battery icon disappears when test_mode is enabled.</string>
     <string name="hook_fix_documents_ui_crash_title">Fix DocumentsUI Crash</string>
     <string name="hook_fix_documents_ui_crash_desc">Fixes the crash issue that occurs when dragging with a mouse in DocumentsUI.</string>
+    <string name="hook_disable_keyboard_hotkey_menu_title">Disable Keyboard Shortcut Hotkey</string>
+    <string name="hook_disable_keyboard_hotkey_menu_desc">Removes the keyboard shortcut hotkey screen that appears when you press Ctrl for 3 seconds.</string>
     <string name="hook_remove_lockscreen_shortcuts_title">Remove Lockscreen Shortcuts</string>
     <string name="hook_remove_lockscreen_shortcuts_desc">Removes the shortcuts at the bottom of the lockscreen.</string>
     <string name="hook_remove_prc_info_title">Remove PRC Info</string>

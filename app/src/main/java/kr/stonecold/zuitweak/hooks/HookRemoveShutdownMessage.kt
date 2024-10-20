@@ -35,9 +35,9 @@ class HookRemoveShutdownMessage : HookBaseHandleInitPackageResources() {
 
     private fun hookRemoveMessage(resparam: XC_InitPackageResources.InitPackageResourcesParam) {
         val resKey = "shutdown_dialog_tips_message"
-        val shutdownDialogTipsMessage = ""
-        resparam.res.setReplacement(resparam.packageName, "string", resKey, shutdownDialogTipsMessage)
+        val resVal = ""
+        resparam.res.setReplacement(resparam.packageName, "string", resKey, resVal)
 
-        XposedUtil.xposedDebug(tag, "Successfully replaced ${resparam.packageName}.$resKey: $shutdownDialogTipsMessage")
+        XposedUtil.xposedDebug(tag, "Successfully replaced ${resparam.packageName}.$resKey: $resVal")
     }
 }

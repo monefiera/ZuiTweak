@@ -21,8 +21,12 @@ object HookManager {
         //COMMON
         registerHook(HookEnableZuiCameraShutterOption())
         registerHook(HookRemoveLockscreenShortcuts())
-        registerHook(HookEnableHiddenDisplaySettings())
         registerHook(HookRemoveShutdownMessage())
+        registerHook(HookEnableHotspot())
+        registerHook(HookEnableWifiDirect())
+        registerHook(HookChangeKeyboardHotkeys())
+        registerHook(HookDisableKeyboardHotkeyMenu())
+        registerHook(HookEnableHiddenDisplaySettings())
         registerHook(HookRemoveUnusedGameServiceIcons())
         //registerHook(HookEnableTurnScreenOn()) ///테스트 필요
 
@@ -32,7 +36,6 @@ object HookManager {
         } else {
             registerHook(HookEnableMultipleSpace())
         }
-        registerHook(HookEnableHotspot())
         registerHook(HookEnableBatteryOverheatNotify())
         registerHook(HookEnableOneVisionSmartSplit())
         //registerHook(HookEnableTaskbarShowRecentApps()) //동작안함
@@ -49,7 +52,6 @@ object HookManager {
 
         //DEVICE
         registerHook(HookEnablePenService())
-        registerHook(HookChangeKeyboardHotkeys())
 
         //UNFUCKZUI
         //registerHook(HookDisableTaskbar()) //기본 기능으로 제공
@@ -63,6 +65,7 @@ object HookManager {
         //DEVELOPMENT
         if (BuildConfig.DEBUG) {
             registerHook(HookApplyKoreanLanguage())
+            registerHook(HookRemoveNotificationBlock())
         }
     }
 

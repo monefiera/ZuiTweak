@@ -1,12 +1,15 @@
 package kr.stonecold.zuitweak.hooks
 
+import android.R.attr.classLoader
 import android.content.Context
 import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.XposedHelpers
+import de.robv.android.xposed.callbacks.XC_InitPackageResources
 import de.robv.android.xposed.callbacks.XC_LoadPackage
 import kr.stonecold.zuitweak.R
 import kr.stonecold.zuitweak.common.*
 import java.util.Locale
+
 
 @Suppress("unused")
 class HookAddKoreanLanguageSettings : HookBaseHandleLoadPackage() {
@@ -24,6 +27,25 @@ class HookAddKoreanLanguageSettings : HookBaseHandleLoadPackage() {
 
     override val hookTargetPackage: Array<String> = arrayOf("com.android.settings")
     override val hookTargetPackageOptional: Array<String> = emptyArray()
+    override val hookTargetPackageRes: Array<String> = arrayOf("com.android.settings")
+
+    override var updateRes: ((resparam: XC_InitPackageResources.InitPackageResourcesParam) -> Unit)? = { resparam ->
+        if (resparam.packageName == "com.android.settings") {
+            when (Constants.deviceVersion) {
+                "16.0" -> {
+                    val language = Locale.getDefault().language
+
+                    if (language == "ko") {
+                        val resKey = "sound"
+                        val resVal = "소리"
+                        resparam.res.setReplacement(resparam.packageName, "string", resKey, resVal)
+
+                        XposedUtil.xposedDebug(tag, "Successfully replaced ${resparam.packageName}.$resKey: $resVal")
+                    }
+                }
+            }
+        }
+    }
 
     override fun isEnabledCustomCheck(): Boolean {
         val zuiKrPatchEnabled = Util.getProperty("ro.stonecold.krpatch.enabled", "false").uppercase()
@@ -36,8 +58,15 @@ class HookAddKoreanLanguageSettings : HookBaseHandleLoadPackage() {
             "com.android.settings" -> {
                 hookLocaleListEditorGetUserLocaleList(lpparam)
                 hookLocaleListEditorGetAllLocaleList(lpparam)
-                hookLocalePickerAxGetSupportedLocales(lpparam)
-                hookUtilsGetChangedName(lpparam)
+                when (Constants.deviceVersion) {
+                    "15.0" -> {
+                        hookLocalePickerAxGetSupportedLocales(lpparam)
+                        hookUtilsGetChangedName(lpparam)
+                    }
+                    "16.0" -> {
+                        hookLenovoUtilsGetChangedName(lpparam)
+                    }
+                }
             }
         }
     }
@@ -93,6 +122,7 @@ class HookAddKoreanLanguageSettings : HookBaseHandleLoadPackage() {
     }
 
     private fun hookLocalePickerAxGetSupportedLocales(lpparam: XC_LoadPackage.LoadPackageParam) {
+        //15.0용
         val className = "com.android.settings.localepicker.LocalePickerAx"
         val methodName = "getSupportedLocales"
         val parameterTypes = arrayOf<Any>(Context::class.java)
@@ -117,6 +147,34 @@ class HookAddKoreanLanguageSettings : HookBaseHandleLoadPackage() {
 
     private fun hookUtilsGetChangedName(lpparam: XC_LoadPackage.LoadPackageParam) {
         val className = "com.android.settings.Utils"
+        val methodName = "getChangedName"
+        val parameterTypes = arrayOf<Any>(
+            "com.android.internal.app.LocaleStore\$LocaleInfo",
+            Context::class.java
+        )
+        val callback = object : XC_MethodHook() {
+            override fun afterHookedMethod(param: MethodHookParam) {
+                try {
+                    val result = param.result as String
+                    val localeInfo = param.args[0]
+                    val localeInfoClass = localeInfo::class.java
+                    val getIdMethod = localeInfoClass.getMethod("getId")
+                    val id = getIdMethod.invoke(localeInfo) as String
+
+                    if (result.isEmpty() && id == "ko-KR") {
+                        param.result = "한국어"
+                    }
+                } catch (e: Throwable) {
+                    XposedUtil.handleHookException(tag, e, className, methodName, *parameterTypes)
+                }
+            }
+        }
+
+        XposedUtil.executeHook(tag, lpparam, className, methodName, *parameterTypes, callback)
+    }
+
+    private fun hookLenovoUtilsGetChangedName(lpparam: XC_LoadPackage.LoadPackageParam) {
+        val className = "com.lenovo.common.utils.LenovoUtils"
         val methodName = "getChangedName"
         val parameterTypes = arrayOf<Any>(
             "com.android.internal.app.LocaleStore\$LocaleInfo",

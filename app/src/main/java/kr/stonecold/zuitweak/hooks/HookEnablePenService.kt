@@ -81,10 +81,6 @@ class HookEnablePenService: HookBaseHandleLoadPackage() {
                         modifiedList.add("Lenovo Stylus")
                         modified = true
                     }
-                    if (!modifiedList.contains("Lenovo Tab Pen Plus")) {
-                        modifiedList.add("Lenovo Tab Pen Plus")
-                        modified = true
-                    }
 
                     if (modified) {
                         param.result = modifiedList

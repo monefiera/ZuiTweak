@@ -1,10 +1,14 @@
 package kr.stonecold.zuitweak.hooks
 
+import android.R.attr.classLoader
 import android.content.Context
+import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.XC_MethodReplacement
+import de.robv.android.xposed.XposedHelpers
 import de.robv.android.xposed.callbacks.XC_LoadPackage
 import kr.stonecold.zuitweak.R
 import kr.stonecold.zuitweak.common.*
+
 
 @Suppress("unused")
 class HookDisableLauncherOnlineSearch : HookBaseHandleLoadPackage() {
@@ -35,7 +39,15 @@ class HookDisableLauncherOnlineSearch : HookBaseHandleLoadPackage() {
                 hookSearchDownloadHelperGetGameAppList(lpparam)
                 hookInternetGlobalSearchIsInternetSearchEnabled(lpparam)
                 hookGlobalSearchUtilsGetDatabaseType(lpparam)
-                hookDownloadSpanCheckFileAndDownLoadDao(lpparam)
+                when (Constants.deviceVersion) {
+                    "16.0" -> {
+                        hookDownloadSpanCheckFileAndDownLoadDao(lpparam)
+                    }
+
+                    "15.0" -> {
+                        hookDownloadSpanCheckFileAndDownLoadDao15(lpparam)
+                    }
+                }
                 hookUtilitiesIsOverlayEnabled(lpparam)
             }
         }
@@ -141,8 +153,19 @@ class HookDisableLauncherOnlineSearch : HookBaseHandleLoadPackage() {
         XposedUtil.executeHook(tag, lpparam, className, methodName, *parameterTypes, callback)
     }
 
-    private fun hookDownloadSpanCheckFileAndDownLoadDao(lpparam: XC_LoadPackage.LoadPackageParam) {
+    private fun hookDownloadSpanCheckFileAndDownLoadDao15(lpparam: XC_LoadPackage.LoadPackageParam) {
+        //15.0용
         val className = "${lpparam.packageName}.DownloadSpan"
+        val methodName = "checkFileAndDownLoadDao"
+        val parameterTypes = arrayOf<Any>(String::class.java)
+        val callback = XC_MethodReplacement.returnConstant(null)
+
+        XposedUtil.executeHook(tag, lpparam, className, methodName, *parameterTypes, callback)
+    }
+
+    private fun hookDownloadSpanCheckFileAndDownLoadDao(lpparam: XC_LoadPackage.LoadPackageParam) {
+        //16.0용
+        val className = "${lpparam.packageName}.networksdk.DownloadSpan"
         val methodName = "checkFileAndDownLoadDao"
         val parameterTypes = arrayOf<Any>(String::class.java)
         val callback = XC_MethodReplacement.returnConstant(null)

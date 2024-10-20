@@ -35,13 +35,13 @@ class HookAllowDisableDolbyAtmosForBuiltinSpeakers : HookBaseHandleLoadPackage()
                     "com.android.systemui" -> "doblyAtmos_title_desc"
                     else -> ""
                 }
-                val dolbySwitchSummary = when (language) {
+                val resVal = when (language) {
                     "ko" -> "태블릿 스피커를 사용 중일 때도 Dolby Atmos를 끌 수 있습니다"
                     else -> "When the tablet speaker is in use, Dolby Atmos can be turned off"
                 }
-                resparam.res.setReplacement(resparam.packageName, "string", resKey, dolbySwitchSummary)
+                resparam.res.setReplacement(resparam.packageName, "string", resKey, resVal)
 
-                XposedUtil.xposedDebug(tag, "Successfully replaced ${resparam.packageName}.$resKey: $dolbySwitchSummary")
+                XposedUtil.xposedDebug(tag, "Successfully replaced ${resparam.packageName}.$resKey: $resVal")
             }
         }
     }
@@ -68,6 +68,7 @@ class HookAllowDisableDolbyAtmosForBuiltinSpeakers : HookBaseHandleLoadPackage()
     }
 
     private fun hookDolbyAtmosFragmentIsHeadsetConnected(lpparam: XC_LoadPackage.LoadPackageParam) {
+        //16.0용
         val className = "com.lenovo.settings.sound.dolby.DolbyAtmosFragment"
         val methodName = "isHeadsetConnected"
         val parameterTypes = emptyArray<Any>()
@@ -77,6 +78,7 @@ class HookAllowDisableDolbyAtmosForBuiltinSpeakers : HookBaseHandleLoadPackage()
     }
 
     private fun hookDolbyAtmosPreferenceFragmentGetheadsetStatus(lpparam: XC_LoadPackage.LoadPackageParam) {
+        //15.0용
         val className = "com.android.settings.dolby.DolbyAtmosPreferenceFragment"
         val methodName = "getheadsetStatus"
         val parameterTypes = emptyArray<Any>()

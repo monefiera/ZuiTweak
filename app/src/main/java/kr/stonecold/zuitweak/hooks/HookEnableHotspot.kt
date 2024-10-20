@@ -12,14 +12,14 @@ import java.util.Locale
 class HookEnableHotspot : HookBaseHandleLoadPackage() {
     override val menuItem
         get() = HookMenuItem(
-            category = HookMenuCategory.ROW,
+            category = HookMenuCategory.COMMON,
             title = LanguageUtil.getString(R.string.hook_enable_hotspot_title),
             description = LanguageUtil.getString(R.string.hook_enable_hotspot_desc),
             defaultSelected = false,
         )
 
     override val hookTargetDevice: Array<String> = emptyArray()
-    override val hookTargetRegion: Array<String> = arrayOf("ROW")
+    override val hookTargetRegion: Array<String> = emptyArray()
     override val hookTargetVersion: Array<String> = emptyArray()
 
     override val hookTargetPackage: Array<String> = arrayOf("com.android.settings")

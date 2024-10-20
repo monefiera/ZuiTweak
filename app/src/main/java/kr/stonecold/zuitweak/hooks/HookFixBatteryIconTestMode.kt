@@ -17,7 +17,7 @@ class HookFixBatteryIconTestMode : HookBaseHandleLoadPackage() {
 
     override val hookTargetDevice: Array<String> = emptyArray()
     override val hookTargetRegion: Array<String> = arrayOf("PRC")
-    override val hookTargetVersion: Array<String> = emptyArray()
+    override val hookTargetVersion: Array<String> = arrayOf("15.0")
 
     override val hookTargetPackage: Array<String> = arrayOf("com.android.systemui")
     override val hookTargetPackageOptional: Array<String> = emptyArray()
