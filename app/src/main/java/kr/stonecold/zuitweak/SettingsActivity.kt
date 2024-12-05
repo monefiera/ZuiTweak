@@ -247,6 +247,15 @@ fun AppContent(modifier: Modifier = Modifier, activity: Activity? = null) {
                                 updateLanguage(context, "en")
                                 languageMenuExpanded = false
                             })
+
+                        DropdownMenuItem(
+                            text = { Text(text = stringResource(id = R.string.english)) },
+                            onClick = {
+                                selectedLanguage = "ja"
+                                LanguageUtil.setLanguage("ja")
+                                updateLanguage(context, "ja")
+                                languageMenuExpanded = false
+                            })
                     }
                 }
             }
