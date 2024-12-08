@@ -1,12 +1,14 @@
 package kr.stonecold.zuitweak.hooks
 
 import android.view.View
+import android.widget.ImageView
 import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.XC_MethodReplacement
 import de.robv.android.xposed.XposedHelpers
 import de.robv.android.xposed.callbacks.XC_LoadPackage
 import kr.stonecold.zuitweak.R
 import kr.stonecold.zuitweak.common.*
+
 
 @Suppress("unused")
 class HookRemoveLockscreenShortcuts : HookBaseHandleLoadPackage() {
@@ -31,6 +33,7 @@ class HookRemoveLockscreenShortcuts : HookBaseHandleLoadPackage() {
                 when (Constants.deviceVersion) {
                     "16.0" -> {
                         hookKeyguardQuickAffordanceInteractorIsUsingRepository(lpparam)
+                        hookKeyguardBottomAreaViewBinderUpdateButton(lpparam)
                     }
 
                     "15.0" -> {
@@ -48,6 +51,32 @@ class HookRemoveLockscreenShortcuts : HookBaseHandleLoadPackage() {
         val methodName = "isUsingRepository"
         val parameterTypes = emptyArray<Any>()
         val callback = XC_MethodReplacement.returnConstant(false)
+
+        XposedUtil.executeHook(tag, lpparam, className, methodName, *parameterTypes, callback)
+    }
+
+    private fun hookKeyguardBottomAreaViewBinderUpdateButton(lpparam: XC_LoadPackage.LoadPackageParam) {
+        val className = "com.android.systemui.keyguard.ui.binder.KeyguardBottomAreaViewBinder"
+        val methodName = "updateButton"
+        val parameterTypes = arrayOf<Any>("android.widget.ImageView", "com.android.systemui.keyguard.ui.viewmodel.KeyguardQuickAffordanceViewModel", "com.android.systemui.plugins.FalsingManager", "kotlin.jvm.functions.Function1", "com.android.systemui.statusbar.VibratorHelper", "com.android.keyguard.KeyguardUpdateMonitor")
+        val callback = object : XC_MethodHook() {
+            override fun beforeHookedMethod(param: MethodHookParam) {
+                try {
+                    val viewModel = param.args[1]
+                    if (viewModel != null) {
+                        val useLongPress =
+                            XposedHelpers.callMethod(viewModel, "getUseLongPress") as Boolean
+                        if (useLongPress) {
+                            val view = param.args[0] as ImageView
+                            view.visibility = View.GONE
+                            param.result = null
+                        }
+                    }
+                } catch (e: Throwable) {
+                    XposedUtil.handleHookException(tag, e, className, methodName, *parameterTypes)
+                }
+            }
+        }
 
         XposedUtil.executeHook(tag, lpparam, className, methodName, *parameterTypes, callback)
     }

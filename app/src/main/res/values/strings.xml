@@ -1,7 +1,7 @@
 <resources>
     <string name="app_name">ZuiTweak</string>
     <string name="xposeddescription">An Xposed module that applies various tweaks to Lenovo Zui-based ROMs.</string>
-    <string name="xposedminversion">82</string>
+    <string name="xposedminversion">93</string>
     <string name="back_press_exit">Press back again to exit.</string>
     <string name="module_not_loaded">Module is not loaded.</string>
     <string name="reboot_required_android">A reboot is required if any settings related to Android packages have been changed.</string>

@@ -46,7 +46,7 @@ class SettingsActivity : ComponentActivity() {
 
         initializeLanguage(this)
 
-        SharedPrefsUtil.init(this)
+        SharedPrefsUtil.init()
         if (SharedPrefsUtil.isInitialized) {
             prefsSnapshot = SharedPrefsUtil.getAllOptions()
         }
@@ -430,7 +430,7 @@ fun initializeLanguage(context: Context) {
     var language = savedLanguage
     val defaultLocale = Locale.getDefault().language
 
-    if(language.isNullOrEmpty()) {
+    if (language.isNullOrEmpty()) {
         language = if (defaultLocale == "ko") "ko" else "en"
     }
 

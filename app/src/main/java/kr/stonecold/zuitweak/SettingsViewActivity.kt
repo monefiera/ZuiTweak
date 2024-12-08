@@ -1,6 +1,5 @@
 package kr.stonecold.zuitweak
 
-import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -34,9 +33,9 @@ class SettingsViewActivity : ComponentActivity() {
         }
     }
 
-    private fun getAllSettings(context: Context): String {
+    private fun getAllSettings(): String {
         val stringBuilder = StringBuilder()
-        SharedPrefsUtil.init(context)
+        SharedPrefsUtil.init()
 
         if (!SharedPrefsUtil.isInitialized) {
             stringBuilder.append("SharedPrefsUtil has not been initialized")
@@ -52,7 +51,6 @@ class SettingsViewActivity : ComponentActivity() {
     @Composable
     fun CacheSettingsScreen() {
         var settingsText by remember { mutableStateOf("Settings will be displayed here.") }
-        val context = LocalContext.current
         val coroutineScope = rememberCoroutineScope()
 
         Column(
@@ -74,7 +72,7 @@ class SettingsViewActivity : ComponentActivity() {
                 Button(onClick = {
                     coroutineScope.launch {
                         settingsText = withContext(Dispatchers.IO) {
-                            getAllSettings(context)
+                            getAllSettings()
                         }
                     }
                 }) {
