@@ -104,4 +104,6 @@
     <string name="hook_remove_shutdown_message_desc">Removes the shutdown message displayed at the bottom.</string>
     <string name="hook_remove_unused_game_service_icons_title">Remove Unused Game Service Icons</string>
     <string name="hook_remove_unused_game_service_icons_desc">Removes QQ, WeChat, Line, and WhatsApp icons from the game service.</string>
+    <string name="hook_disable_auto_pen_button_title">Disable Automatic Pen Button Activation</string>
+    <string name="hook_disable_auto_pen_button_desc">Disables the automatic activation of the pen button when connected via Bluetooth.</string>
 </resources>
