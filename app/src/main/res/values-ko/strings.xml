@@ -104,5 +104,7 @@
     <string name="hook_remove_shutdown_message_desc">하단에 보이는 종료 메시지를 제거합니다.</string>
     <string name="hook_remove_unused_game_service_icons_title">게임 서비스 미사용 아이콘 제거</string>
     <string name="hook_remove_unused_game_service_icons_desc">게임 서비스에서 보이는 QQ, WeChat, Line, WhatsApp 아이콘을 제거합니다.</string>
+    <string name="hook_disable_auto_pen_button_title">펜버튼 자동 활성화 중지</string>
+    <string name="hook_disable_auto_pen_button_desc">Bluetooth 연결시 자동으로 활성화 되는 펀버튼 활성화 기능을 중지합니다.</string>
 </resources>
 

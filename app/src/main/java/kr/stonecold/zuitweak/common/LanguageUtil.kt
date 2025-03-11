@@ -22,7 +22,7 @@ object LanguageUtil {
     }
 
     fun getString(id: Int): String {
-        var result = ""
+        var result: String
         try {
             val context = ZuiTweakApplication.appContext
             result = context.getString(id)

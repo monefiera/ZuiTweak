@@ -3,6 +3,7 @@ package kr.stonecold.zuitweak
 import de.robv.android.xposed.IXposedHookInitPackageResources
 import de.robv.android.xposed.IXposedHookLoadPackage
 import de.robv.android.xposed.IXposedHookZygoteInit
+import de.robv.android.xposed.SELinuxHelper
 import de.robv.android.xposed.callbacks.XC_InitPackageResources
 import de.robv.android.xposed.callbacks.XC_LoadPackage
 import kr.stonecold.zuitweak.common.*
@@ -50,11 +51,10 @@ class XposedInit : IXposedHookZygoteInit, IXposedHookLoadPackage, IXposedHookIni
             XposedUtil.xposedError(tag, "Device Model: ${Constants.deviceModel} - This device is not supported")
             return
         }
+
         if (lpparam == null) {
             return
         }
-
-        XposedPrefsUtil.reload()
 
         handleLoadPackageCustom(lpparam)
 
@@ -102,11 +102,12 @@ class XposedInit : IXposedHookZygoteInit, IXposedHookLoadPackage, IXposedHookIni
             XposedUtil.xposedError(tag, "Device Model: ${Constants.deviceModel} - This device is not supported")
             return
         }
+
+        XposedPrefsUtil.reload()
+
         if (resparam == null) {
             return
         }
-
-        XposedPrefsUtil.reload()
 
         handleInitPackageResourcesCustom(resparam)
 

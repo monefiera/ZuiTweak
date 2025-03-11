@@ -28,6 +28,7 @@ object HookManager {
         registerHook(HookDisableKeyboardHotkeyMenu())
         registerHook(HookEnableHiddenDisplaySettings())
         registerHook(HookRemoveUnusedGameServiceIcons())
+        registerHook(HookDisableAutoPenButton())
         //registerHook(HookEnableTurnScreenOn()) ///테스트 필요
 
         //ROW
